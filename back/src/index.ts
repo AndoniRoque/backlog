@@ -4,6 +4,7 @@ import cors from "cors";
 
 import gamesRouter from "./routes/games";
 import stateRouter from "./routes/state";
+import axios from "axios";
 
 const app = express();
 app.use(cors());
@@ -15,6 +16,7 @@ app.use("/games", gamesRouter);
 app.use("/state", stateRouter);
 
 const port = Number(process.env.PORT ?? 4000);
+
 app.listen(port, () =>
   console.log(`API listening on http://localhost:${port}`),
 );
