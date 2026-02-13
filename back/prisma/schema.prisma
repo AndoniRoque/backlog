@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum GameStatus {
+  BACKLOG
+  PLAYING
+  COMPLETED
+  DROPPED
+  PAUSED
+}
+
+enum PriorityTag {
+  NONE
+  FAVORITE
+  MUST_PLAY
+}
+
+model Game {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Tu data "manual" mínima (por si IGDB falla o querés customizar)
+  title          String
+  releaseYear    Int?
+  estimatedHours Int?
+
+  status   GameStatus  @default(BACKLOG)
+  priority PriorityTag @default(NONE)
+
+  // Integración IGDB (clave)
+  igdbId    Int?    @unique
+  igdbSlug  String?
+  summary   String?
+  developer String?
+  coverUrl  String?
+  heroUrl   String?
+
+  // Tienda/plataforma (texto libre por ahora)
+  store String? // "Steam", "Epic", "Xbox", etc.
+
+  // Orden "Play next" (null si no está en la cola)
+  queuePosition Int?       @unique
+  appStates     AppState[]
+
+  @@index([title])
+  @@index([status])
+  @@index([priority])
+}
+
+model AppState {
+  // Un registro singleton
+  id               Int     @id @default(1)
+  nowPlayingGameId String?
+  nowPlayingGame   Game?   @relation(fields: [nowPlayingGameId], references: [id], onDelete: SetNull)
+
+  updatedAt DateTime @updatedAt
+}
