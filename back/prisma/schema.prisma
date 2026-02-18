@@ -35,12 +35,12 @@ model Game {
   priority PriorityTag @default(NONE)
 
   // Integración IGDB (clave)
-  igdbId    Int?    @unique
-  igdbSlug  String?
-  summary   String?
-  developer String?
-  coverUrl  String?
-  heroUrl   String?
+  igdbId     Int?     @unique
+  igdbSlug   String?
+  summary    String?
+  developers String[] @default([])
+  coverUrl   String?
+  heroUrl    String?
 
   // Tienda/plataforma (texto libre por ahora)
   store String? // "Steam", "Epic", "Xbox", etc.
