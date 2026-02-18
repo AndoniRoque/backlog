@@ -5,13 +5,26 @@ import axios from "axios";
 
 const r = Router();
 
-r.post("/add-game", async (req, res) => {
+r.get("/", async (req, res) => {
+  const games = await prisma.game.findMany({
+    orderBy: { title: "desc" },
+  });
+  res.json(games);
+});
+
+r.post("/", async (req, res) => {
   const { igdbId, priority } = req.body;
   if (!igdbId || typeof igdbId !== "number")
     return res.status(400).json({ error: "igdbId required" });
 
   const saved = await gamesService.addFromIgdb({ igdbId, priority });
   res.status(201).json(saved);
+});
+
+r.delete("/:id", async (req, res) => {
+  const { id } = req.params;
+  await prisma.game.delete({ where: { igdbId: parseInt(id) } });
+  res.json({ ok: true });
 });
 
 // Cola "Play next"

@@ -36,7 +36,6 @@ model Game {
 
   // Integración IGDB (clave)
   igdbId     Int?     @unique
-  igdbSlug   String?
   summary    String?
   developers String[] @default([])
   coverUrl   String?
