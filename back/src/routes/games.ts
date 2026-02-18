@@ -4,64 +4,58 @@ import axios from "axios";
 
 const r = Router();
 
-const CLIENT_ID = process.env.CLIENT_ID;
-let ACCESS_TOKEN: string = "";
-const BASE_URL = process.env.BASE_URL;
-const SECRET = process.env.SECRET;
-const ARTWORK_URL = process.env.ARTWORK_URL;
+// const getAccessToken = async () => {
+//   try {
+//     const response = await axios.post(`${process.env.TOKEN_URL}`, null, {
+//       params: {
+//         client_id: CLIENT_ID,
+//         client_secret: SECRET,
+//         grant_type: "client_credentials",
+//       },
+//     });
+//     ACCESS_TOKEN = response.data.access_token;
+//   } catch (error) {
+//     console.error("Error getting access token:", error);
+//   }
+// };
 
-const getAccessToken = async () => {
-  try {
-    const response = await axios.post(`${process.env.TOKEN_URL}`, null, {
-      params: {
-        client_id: CLIENT_ID,
-        client_secret: SECRET,
-        grant_type: "client_credentials",
-      },
-    });
-    ACCESS_TOKEN = response.data.access_token;
-  } catch (error) {
-    console.error("Error getting access token:", error);
-  }
-};
+// (async () => {
+//   await getAccessToken();
+// })();
 
-(async () => {
-  await getAccessToken();
-})();
+// const getFromIGDB = async (query: string) => {
+//   try {
+//     const response = await axios.post(`${BASE_URL}`, query, {
+//       headers: {
+//         "Client-ID": CLIENT_ID,
+//         Authorization: `Bearer ${ACCESS_TOKEN}`,
+//       },
+//     });
+//     return response.data;
+//   } catch (error) {
+//     console.error("Error fetching from IGDB:", error);
+//     return null;
+//   }
+// };
 
-const getFromIGDB = async (query: string) => {
-  try {
-    const response = await axios.post(`${BASE_URL}`, query, {
-      headers: {
-        "Client-ID": CLIENT_ID,
-        Authorization: `Bearer ${ACCESS_TOKEN}`,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching from IGDB:", error);
-    return null;
-  }
-};
-
-const fetchArtwork = async (id: string | number) => {
-  try {
-    const response = await axios.post(
-      `${ARTWORK_URL}`,
-      `fields id, url, image_id; where id = ${id};`,
-      {
-        headers: {
-          "Client-ID": CLIENT_ID,
-          Authorization: `Bearer ${ACCESS_TOKEN}`,
-        },
-      },
-    );
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching artwork from IGDB:", error);
-    return null;
-  }
-};
+// const fetchArtwork = async (id: string | number) => {
+//   try {
+//     const response = await axios.post(
+//       `${ARTWORK_URL}`,
+//       `fields id, url, image_id; where id = ${id};`,
+//       {
+//         headers: {
+//           "Client-ID": CLIENT_ID,
+//           Authorization: `Bearer ${ACCESS_TOKEN}`,
+//         },
+//       },
+//     );
+//     return response.data;
+//   } catch (error) {
+//     console.error("Error fetching artwork from IGDB:", error);
+//     return null;
+//   }
+// };
 
 r.get("/artworks", async (req, res) => {
   const { id } = req.query;
