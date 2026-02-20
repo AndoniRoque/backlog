@@ -55,9 +55,9 @@ model Game {
 
 model AppState {
   // Un registro singleton
-  id               Int     @id @default(1)
-  nowPlayingGameId String?
-  nowPlayingGame   Game?   @relation(fields: [nowPlayingGameId], references: [id], onDelete: SetNull)
+  id                   Int   @id @default(1)
+  nowPlayingGameIgdbId Int?
+  nowPlayingGame       Game? @relation(fields: [nowPlayingGameIgdbId], references: [igdbId], onDelete: SetNull)
 
   updatedAt DateTime @updatedAt
 }

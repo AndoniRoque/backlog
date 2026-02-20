@@ -40,18 +40,26 @@ export async function addFromIgdb(input: {
   });
 }
 
-export async function getGames(
-  status:
+export async function getGames(input: {
+  status?:
     | "BACKLOG"
     | "PLAYING"
     | "COMPLETED"
     | "DROPPED"
     | "PAUSED"
-    | undefined,
-) {
+    | undefined;
+  sort?:
+    | "title"
+    | "releaseYear"
+    | "priority"
+    | "store"
+    | "status"
+    | "estimatedHours";
+  order?: "asc" | "desc";
+}) {
   return prisma.game.findMany({
-    where: { status: status || undefined },
-    orderBy: { title: "asc" },
+    where: { status: input.status || undefined },
+    orderBy: { [input.sort || "title"]: input.order || "asc" },
   });
 }
 
@@ -84,7 +92,7 @@ export async function updateGameDetails(
     title?: string;
     summary?: string;
     releaseYear?: number;
-    developers?: string;
+    developers?: string[];
     store?: string;
   },
 ) {
@@ -97,7 +105,7 @@ export async function updateGameDetails(
   if (details.store) updateData.store = details.store;
 
   const updated = await prisma.game.update({
-    where: { igdbId: parseInt(id) },
+    where: { igdbId: id },
     data: updateData,
   });
 
@@ -106,4 +114,25 @@ export async function updateGameDetails(
 
 export async function deleteGame(id: number) {
   await prisma.game.delete({ where: { igdbId: id } });
+}
+
+export async function searchGameByTitle(title: string) {
+  return prisma.game.findMany({
+    where: { title: { contains: title, mode: "insensitive" } },
+    orderBy: { title: "asc" },
+  });
+}
+
+export async function getGamesByPriority(priority: PriorityTag) {
+  return prisma.game.findMany({
+    where: { priority },
+    orderBy: { title: "asc" },
+  });
+}
+
+export async function getGamesByStore(store: string) {
+  return prisma.game.findMany({
+    where: { store: { contains: store, mode: "insensitive" } },
+    orderBy: { title: "asc" },
+  });
 }

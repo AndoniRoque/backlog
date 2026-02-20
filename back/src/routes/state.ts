@@ -13,8 +13,8 @@ r.put("/now-playing", async (req, res) => {
 
   const state = await prisma.appState.upsert({
     where: { id: 1 },
-    update: { nowPlayingGameId: gameId ?? null },
-    create: { id: 1, nowPlayingGameId: gameId ?? null },
+    update: { nowPlayingGameIgdbId: gameId ?? null },
+    create: { id: 1, nowPlayingGameIgdbId: gameId ?? null },
     include: { nowPlayingGame: true },
   });
 

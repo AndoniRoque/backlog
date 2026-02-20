@@ -7,7 +7,11 @@ import { parse } from "node:path";
 const r = Router();
 
 r.get("/", async (req, res) => {
-  const { status } = req.query as { status?: string };
+  const { status, sort, order } = req.query as {
+    status?: string;
+    order?: string;
+    sort?: string;
+  };
 
   if (
     status &&
@@ -17,15 +21,34 @@ r.get("/", async (req, res) => {
   )
     return res.status(400).json({ error: "Invalid status value" });
 
-  const games = await gamesService.getGames(status?.toUpperCase() as any);
+  const allowedSortFields = [
+    "title",
+    "releaseYear",
+    "priority",
+    "store",
+    "status",
+    "estimatedHours",
+  ] as const;
+
+  const sortKey = (
+    allowedSortFields.includes(sort as any) ? sort : "title"
+  ) as (typeof allowedSortFields)[number];
+
+  const sortOrder = order === "desc" ? "desc" : "asc";
+
+  const games = await gamesService.getGames({
+    status: status?.toUpperCase() as any,
+    sort: sortKey,
+    order: sortOrder,
+  });
   res.json(games);
 });
 
-r.get("/:id", async (req, res) => {
-  const { id } = req.params;
-  if (isNaN(parseInt(id)))
+r.get("/:igdbId", async (req, res) => {
+  const { igdbId } = req.params;
+  if (isNaN(parseInt(igdbId)))
     return res.status(400).json({ error: "Invalid game ID" });
-  const game = await gamesService.getGameById(parseInt(id));
+  const game = await gamesService.getGameById(parseInt(igdbId));
   if (!game) return res.status(404).json({ error: "Game not found" });
   res.json(game);
 });
@@ -48,14 +71,14 @@ r.post("/", async (req, res) => {
   res.status(201).json(saved);
 });
 
-r.patch("/:id", async (req, res) => {
-  const { id } = req.params;
+r.patch("/:igdbId", async (req, res) => {
+  const { igdbId } = req.params;
   const { title, summary, releaseYear, developers, store } = req.body;
 
-  if (isNaN(parseInt(id)))
+  if (isNaN(parseInt(igdbId)))
     return res.status(400).json({ error: "Invalid game ID" });
 
-  const updated = await gamesService.updateGameDetails(parseInt(id), {
+  const updated = await gamesService.updateGameDetails(parseInt(igdbId), {
     title,
     summary,
     releaseYear,
@@ -66,11 +89,11 @@ r.patch("/:id", async (req, res) => {
   res.json(updated);
 });
 
-r.patch("/:id/priority", async (req, res) => {
-  const { id } = req.params;
+r.patch("/:igdbId/priority", async (req, res) => {
+  const { igdbId } = req.params;
   const { priority } = req.body;
 
-  if (isNaN(parseInt(id)))
+  if (isNaN(parseInt(igdbId)))
     return res.status(400).json({ error: "Invalid game ID" });
 
   if (
@@ -79,15 +102,18 @@ r.patch("/:id/priority", async (req, res) => {
   )
     return res.status(400).json({ error: "Invalid priority value" });
 
-  const updated = await gamesService.updateGamePriority(parseInt(id), priority);
+  const updated = await gamesService.updateGamePriority(
+    parseInt(igdbId),
+    priority,
+  );
   res.json(updated);
 });
 
-r.patch("/:id/status", async (req, res) => {
-  const { id } = req.params;
+r.patch("/:igdbId/status", async (req, res) => {
+  const { igdbId } = req.params;
   const { status } = req.body;
 
-  if (isNaN(parseInt(id)))
+  if (isNaN(parseInt(igdbId)))
     return res.status(400).json({ error: "Invalid game ID" });
 
   if (
@@ -96,17 +122,17 @@ r.patch("/:id/status", async (req, res) => {
   )
     return res.status(400).json({ error: "Invalid status value" });
 
-  const updated = await gamesService.updateGameStatus(parseInt(id), status);
+  const updated = await gamesService.updateGameStatus(parseInt(igdbId), status);
   res.json(updated);
 });
 
-r.delete("/:id", async (req, res) => {
-  const { id } = req.params;
+r.delete("/:igdbId", async (req, res) => {
+  const { igdbId } = req.params;
 
-  if (isNaN(parseInt(id)))
+  if (isNaN(parseInt(igdbId)))
     return res.status(400).json({ error: "Invalid game ID" });
 
-  await gamesService.deleteGame(parseInt(id));
+  await gamesService.deleteGame(parseInt(igdbId));
   res.json({ ok: true });
 });
 
