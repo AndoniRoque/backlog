@@ -54,3 +54,9 @@ export async function getGames(
     orderBy: { title: "asc" },
   });
 }
+
+export async function getGameById(id: number) {
+  return prisma.game.findUnique({
+    where: { igdbId: id },
+  });
+}

@@ -22,9 +22,9 @@ r.get("/", async (req, res) => {
 
 r.get("/:id", async (req, res) => {
   const { id } = req.params;
-  const game = await prisma.game.findUnique({
-    where: { igdbId: parseInt(id) },
-  });
+  if (isNaN(parseInt(id)))
+    return res.status(400).json({ error: "Invalid game ID" });
+  const game = await gamesService.getGameById(parseInt(id));
   if (!game) return res.status(404).json({ error: "Game not found" });
   res.json(game);
 });
