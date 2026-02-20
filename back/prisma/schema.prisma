@@ -16,7 +16,7 @@ enum GameStatus {
 }
 
 enum PriorityTag {
-  NONE
+  MAYBE_SOMEDAY
   FAVORITE
   MUST_PLAY
 }
@@ -32,7 +32,7 @@ model Game {
   estimatedHours Int?
 
   status   GameStatus  @default(BACKLOG)
-  priority PriorityTag @default(NONE)
+  priority PriorityTag @default(MAYBE_SOMEDAY)
 
   // Integración IGDB (clave)
   igdbId     Int?     @unique
@@ -45,7 +45,7 @@ model Game {
   store String? // "Steam", "Epic", "Xbox", etc.
 
   // Orden "Play next" (null si no está en la cola)
-  queuePosition Int?       @unique
+  queuePosition Int?       @unique @default(200)
   appStates     AppState[]
 
   @@index([title])

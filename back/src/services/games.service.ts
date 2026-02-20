@@ -4,7 +4,8 @@ import { searchGameInfo } from "./igdb.service";
 
 export async function addFromIgdb(input: {
   igdbId: number;
-  priority?: "NONE" | "FAVORITE" | "MUST_PLAY";
+  priority?: "MAYBE_SOMEDAY" | "FAVORITE" | "MUST_PLAY";
+  store?: string;
 }) {
   const details = await searchGameInfo(input.igdbId);
 
@@ -22,7 +23,8 @@ export async function addFromIgdb(input: {
       coverUrl: details.coverUrl,
       heroUrl: details.heroUrl,
       developers: details.developers,
-      priority: (input.priority || "NONE") as PriorityTag,
+      store: input.store,
+      priority: (input.priority || "MAYBE_SOMEDAY") as PriorityTag,
     },
     create: {
       igdbId: details.igdbId,
@@ -32,7 +34,23 @@ export async function addFromIgdb(input: {
       coverUrl: details.coverUrl,
       heroUrl: details.heroUrl,
       developers: details.developers,
-      priority: (input.priority || "NONE") as PriorityTag,
+      store: input.store,
+      priority: (input.priority || "MAYBE_SOMEDAY") as PriorityTag,
     },
+  });
+}
+
+export async function getGames(
+  status:
+    | "BACKLOG"
+    | "PLAYING"
+    | "COMPLETED"
+    | "DROPPED"
+    | "PAUSED"
+    | undefined,
+) {
+  return prisma.game.findMany({
+    where: { status: status || undefined },
+    orderBy: { title: "asc" },
   });
 }

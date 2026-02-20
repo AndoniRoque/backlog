@@ -4,10 +4,7 @@ import { prisma } from "../prisma";
 const r = Router();
 
 r.get("/", async (_req, res) => {
-  const state = await prisma.appState.findUnique({
-    where: { id: 1 },
-    include: { nowPlayingGame: true },
-  });
+  const state = await prisma.appState.findFirst();
   res.json(state);
 });
 
