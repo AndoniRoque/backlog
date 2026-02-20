@@ -1,4 +1,4 @@
-import { Router } from "express";
+import e, { Router } from "express";
 import * as gamesService from "../services/games.service";
 
 const r = Router();
@@ -181,3 +181,5 @@ r.delete("/:igdbId", async (req, res) => {
     throw error;
   }
 });
+
+export default r;
