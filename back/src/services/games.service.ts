@@ -60,3 +60,50 @@ export async function getGameById(id: number) {
     where: { igdbId: id },
   });
 }
+
+export async function updateGamePriority(id: number, priority: PriorityTag) {
+  return prisma.game.update({
+    where: { igdbId: id },
+    data: { priority },
+  });
+}
+
+export async function updateGameStatus(
+  id: number,
+  status: "BACKLOG" | "PLAYING" | "COMPLETED" | "DROPPED" | "PAUSED",
+) {
+  return prisma.game.update({
+    where: { igdbId: id },
+    data: { status },
+  });
+}
+
+export async function updateGameDetails(
+  id: number,
+  details: {
+    title?: string;
+    summary?: string;
+    releaseYear?: number;
+    developers?: string;
+    store?: string;
+  },
+) {
+  const updateData: any = {};
+
+  if (details.title) updateData.title = details.title;
+  if (details.summary) updateData.summary = details.summary;
+  if (details.releaseYear) updateData.releaseYear = details.releaseYear;
+  if (details.developers) updateData.developers = details.developers;
+  if (details.store) updateData.store = details.store;
+
+  const updated = await prisma.game.update({
+    where: { igdbId: parseInt(id) },
+    data: updateData,
+  });
+
+  return updated;
+}
+
+export async function deleteGame(id: number) {
+  await prisma.game.delete({ where: { igdbId: id } });
+}

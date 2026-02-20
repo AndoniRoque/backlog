@@ -2,6 +2,7 @@ import { Router } from "express";
 import { prisma } from "../prisma";
 import * as gamesService from "../services/games.service";
 import axios from "axios";
+import { parse } from "node:path";
 
 const r = Router();
 
@@ -47,19 +48,38 @@ r.post("/", async (req, res) => {
   res.status(201).json(saved);
 });
 
+r.patch("/:id", async (req, res) => {
+  const { id } = req.params;
+  const { title, summary, releaseYear, developers, store } = req.body;
+
+  if (isNaN(parseInt(id)))
+    return res.status(400).json({ error: "Invalid game ID" });
+
+  const updated = await gamesService.updateGameDetails(parseInt(id), {
+    title,
+    summary,
+    releaseYear,
+    developers,
+    store,
+  });
+
+  res.json(updated);
+});
+
 r.patch("/:id/priority", async (req, res) => {
   const { id } = req.params;
   const { priority } = req.body;
+
+  if (isNaN(parseInt(id)))
+    return res.status(400).json({ error: "Invalid game ID" });
+
   if (
     !priority ||
     !["MAYBE_SOMEDAY", "FAVORITE", "MUST_PLAY"].includes(priority)
   )
     return res.status(400).json({ error: "Invalid priority value" });
 
-  const updated = await prisma.game.update({
-    where: { igdbId: parseInt(id) },
-    data: { priority },
-  });
+  const updated = await gamesService.updateGamePriority(parseInt(id), priority);
   res.json(updated);
 });
 
@@ -67,22 +87,26 @@ r.patch("/:id/status", async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
+  if (isNaN(parseInt(id)))
+    return res.status(400).json({ error: "Invalid game ID" });
+
   if (
     !status ||
     !["BACKLOG", "PLAYING", "COMPLETED", "DROPPED", "PAUSED"].includes(status)
   )
     return res.status(400).json({ error: "Invalid status value" });
 
-  const updated = await prisma.game.update({
-    where: { igdbId: parseInt(id) },
-    data: { status },
-  });
+  const updated = await gamesService.updateGameStatus(parseInt(id), status);
   res.json(updated);
 });
 
 r.delete("/:id", async (req, res) => {
   const { id } = req.params;
-  await prisma.game.delete({ where: { igdbId: parseInt(id) } });
+
+  if (isNaN(parseInt(id)))
+    return res.status(400).json({ error: "Invalid game ID" });
+
+  await gamesService.deleteGame(parseInt(id));
   res.json({ ok: true });
 });
 
