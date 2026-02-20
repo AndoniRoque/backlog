@@ -1,24 +1,16 @@
 import { Router } from "express";
 import { prisma } from "../prisma";
+import * as stateService from "../services/state.service";
 
 const r = Router();
 
-r.get("/", async (_req, res) => {
-  const state = await prisma.appState.findFirst();
-  res.json(state);
-});
-
-r.put("/now-playing", async (req, res) => {
-  const { gameId } = req.body as { gameId: string | null };
-
-  const state = await prisma.appState.upsert({
-    where: { id: 1 },
-    update: { nowPlayingGameIgdbId: gameId ?? null },
-    create: { id: 1, nowPlayingGameIgdbId: gameId ?? null },
-    include: { nowPlayingGame: true },
-  });
-
-  res.json(state);
+r.get("/", async (req, res) => {
+  try {
+    const nowPlaying = await stateService.getNowPlayingGame();
+    res.json({ nowPlaying });
+  } catch (error) {
+    res.status(500).json({ error: (error as any).message });
+  }
 });
 
 export default r;
