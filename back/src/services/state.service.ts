@@ -6,6 +6,3 @@ export async function getNowPlayingGame() {
     orderBy: { updatedAt: "desc" },
   });
 }
-
-  return nowPlaying;
-}
