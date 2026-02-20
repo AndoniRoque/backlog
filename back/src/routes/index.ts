@@ -12,3 +12,5 @@ router.use("/igdb", igdbRouter);
 router.use("/queue", queueRouter);
 
 export default router;
+
+// TODO: implementar cambiar el estado en queue para juego de queue
