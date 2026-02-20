@@ -1,14 +1,16 @@
 import { Router } from "express";
-import { prisma } from "../prisma";
 import * as gamesService from "../services/games.service";
-import axios from "axios";
-import { parse } from "node:path";
 
 const r = Router();
 
 r.get("/", async (req, res) => {
   const { status, sort, order } = req.query as {
     status?: string;
+    priority?: string;
+    store?: string;
+    title?: string;
+    releaseYear?: number;
+    estimatedHours?: number;
     order?: string;
     sort?: string;
   };
@@ -38,6 +40,15 @@ r.get("/", async (req, res) => {
 
   const games = await gamesService.getGames({
     status: status?.toUpperCase() as any,
+    priority: req.query.priority as any,
+    store: req.query.store as string,
+    title: req.query.title as string,
+    releaseYear: req.query.releaseYear
+      ? parseInt(req.query.releaseYear as string)
+      : undefined,
+    estimatedHours: req.query.estimatedHours
+      ? parseInt(req.query.estimatedHours as string)
+      : undefined,
     sort: sortKey,
     order: sortOrder,
   });
@@ -67,8 +78,16 @@ r.post("/", async (req, res) => {
   if (store && typeof store !== "string")
     return res.status(400).json({ error: "Invalid store value" });
 
-  const saved = await gamesService.addFromIgdb({ igdbId, priority, store });
-  res.status(201).json(saved);
+  try {
+    const saved = await gamesService.addFromIgdb({ igdbId, priority, store });
+    res.status(201).json(saved);
+  } catch (error: any) {
+    console.error("Error adding game:", error);
+    if (error?.isAxiosError) {
+      return res.status(502).json({ error: "IGDB error" });
+    }
+    return res.status(500).json({ error: "Failed to add game" });
+  }
 });
 
 r.patch("/:igdbId", async (req, res) => {
@@ -78,15 +97,21 @@ r.patch("/:igdbId", async (req, res) => {
   if (isNaN(parseInt(igdbId)))
     return res.status(400).json({ error: "Invalid game ID" });
 
-  const updated = await gamesService.updateGameDetails(parseInt(igdbId), {
-    title,
-    summary,
-    releaseYear,
-    developers,
-    store,
-  });
+  try {
+    const updated = await gamesService.updateGameDetails(parseInt(igdbId), {
+      title,
+      summary,
+      releaseYear,
+      developers,
+      store,
+    });
 
-  res.json(updated);
+    res.json(updated);
+  } catch (error) {
+    if ((error as any)?.code === "P2025")
+      return res.status(404).json({ error: "Game not found" });
+    throw error;
+  }
 });
 
 r.patch("/:igdbId/priority", async (req, res) => {
@@ -102,11 +127,17 @@ r.patch("/:igdbId/priority", async (req, res) => {
   )
     return res.status(400).json({ error: "Invalid priority value" });
 
-  const updated = await gamesService.updateGamePriority(
-    parseInt(igdbId),
-    priority,
-  );
-  res.json(updated);
+  try {
+    const updated = await gamesService.updateGamePriority(
+      parseInt(igdbId),
+      priority,
+    );
+    res.json(updated);
+  } catch (error) {
+    if ((error as any)?.code === "P2025")
+      return res.status(404).json({ error: "Game not found" });
+    throw error;
+  }
 });
 
 r.patch("/:igdbId/status", async (req, res) => {
@@ -122,8 +153,17 @@ r.patch("/:igdbId/status", async (req, res) => {
   )
     return res.status(400).json({ error: "Invalid status value" });
 
-  const updated = await gamesService.updateGameStatus(parseInt(igdbId), status);
-  res.json(updated);
+  try {
+    const updated = await gamesService.updateGameStatus(
+      parseInt(igdbId),
+      status,
+    );
+    res.json(updated);
+  } catch (error) {
+    if ((error as any)?.code === "P2025")
+      return res.status(404).json({ error: "Game not found" });
+    throw error;
+  }
 });
 
 r.delete("/:igdbId", async (req, res) => {
@@ -132,37 +172,12 @@ r.delete("/:igdbId", async (req, res) => {
   if (isNaN(parseInt(igdbId)))
     return res.status(400).json({ error: "Invalid game ID" });
 
-  await gamesService.deleteGame(parseInt(igdbId));
-  res.json({ ok: true });
+  try {
+    await gamesService.deleteGame(parseInt(igdbId));
+    res.json({ ok: true });
+  } catch (error) {
+    if ((error as any)?.code === "P2025")
+      return res.status(404).json({ error: "Game not found" });
+    throw error;
+  }
 });
-
-// r.get("/completed", async (req, res) => {
-//   const completedGames = await gamesService.getCompletedGames();
-//   res.json(completedGames || []);
-// });
-
-// // Cola "Play next"
-// r.get("/queue", async (_req, res) => {
-//   const queue = await prisma.game.findMany({
-//     where: { queuePosition: { not: null } },
-//     orderBy: { queuePosition: "asc" },
-//   });
-//   res.json(queue);
-// });
-
-// // Reordenar cola (drag & drop) — recibe array de IDs en el orden final
-// r.put("/queue", async (req, res) => {
-//   const { orderedIds } = req.body as { orderedIds: string[] };
-//   if (!Array.isArray(orderedIds))
-//     return res.status(400).json({ error: "orderedIds required" });
-
-//   await prisma.$transaction(
-//     orderedIds.map((id, idx) =>
-//       prisma.game.update({ where: { id }, data: { queuePosition: idx + 1 } }),
-//     ),
-//   );
-
-//   res.json({ ok: true });
-// });
-
-export default r;

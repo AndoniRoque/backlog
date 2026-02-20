@@ -1,6 +1,7 @@
 import { PriorityTag } from "@prisma/client";
 import { prisma } from "../prisma";
 import { searchGameInfo } from "./igdb.service";
+type Status = "BACKLOG" | "PLAYING" | "COMPLETED" | "DROPPED" | "PAUSED";
 
 export async function addFromIgdb(input: {
   igdbId: number;
@@ -41,13 +42,12 @@ export async function addFromIgdb(input: {
 }
 
 export async function getGames(input: {
-  status?:
-    | "BACKLOG"
-    | "PLAYING"
-    | "COMPLETED"
-    | "DROPPED"
-    | "PAUSED"
-    | undefined;
+  status?: Status;
+  title?: string;
+  releaseYear?: number;
+  estimatedHours?: number;
+  priority?: PriorityTag;
+  store?: string;
   sort?:
     | "title"
     | "releaseYear"
@@ -57,9 +57,23 @@ export async function getGames(input: {
     | "estimatedHours";
   order?: "asc" | "desc";
 }) {
+  const sort = input.sort || "title";
+  const order = input.order === "desc" ? "desc" : "asc";
+
   return prisma.game.findMany({
-    where: { status: input.status || undefined },
-    orderBy: { [input.sort || "title"]: input.order || "asc" },
+    where: {
+      ...(input.status ? { status: input.status } : {}),
+      ...(input.title
+        ? { title: { contains: input.title, mode: "insensitive" } }
+        : {}),
+      ...(input.releaseYear ? { releaseYear: input.releaseYear } : {}),
+      ...(input.estimatedHours ? { estimatedHours: input.estimatedHours } : {}),
+      ...(input.priority ? { priority: input.priority } : {}),
+      ...(input.store
+        ? { store: { contains: input.store, mode: "insensitive" } }
+        : {}),
+    },
+    orderBy: [{ [sort]: order }, { title: "asc" }],
   });
 }
 
@@ -114,25 +128,4 @@ export async function updateGameDetails(
 
 export async function deleteGame(id: number) {
   await prisma.game.delete({ where: { igdbId: id } });
-}
-
-export async function searchGameByTitle(title: string) {
-  return prisma.game.findMany({
-    where: { title: { contains: title, mode: "insensitive" } },
-    orderBy: { title: "asc" },
-  });
-}
-
-export async function getGamesByPriority(priority: PriorityTag) {
-  return prisma.game.findMany({
-    where: { priority },
-    orderBy: { title: "asc" },
-  });
-}
-
-export async function getGamesByStore(store: string) {
-  return prisma.game.findMany({
-    where: { store: { contains: store, mode: "insensitive" } },
-    orderBy: { title: "asc" },
-  });
 }
