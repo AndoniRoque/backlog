@@ -96,33 +96,33 @@ export default function SearchGameIgdb() {
   return (
     <Box>
       <Input
-        placeholder="Search games..."
+        placeholder="Add games..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
 
       <Box mt={2}>
         {loading && (
-          <HStack>
+          <HStack position={"absolute"}>
             <Spinner size="sm" />
             <Text fontSize="sm">Searching…</Text>
           </HStack>
         )}
 
         {err && (
-          <Text fontSize="sm" color="red.500">
+          <Text fontSize="sm" color="red.500" position={"absolute"}>
             {err}
           </Text>
         )}
 
         {savedMsg && (
-          <Text fontSize="sm" color="green.500">
+          <Text fontSize="sm" color="green.500" position={"absolute"}>
             {savedMsg}
           </Text>
         )}
 
         {!loading && !err && data.length > 0 && (
-          <Box mt={2}>
+          <Box mt={2} position={"absolute"}>
             {data.map((g) => (
               <HStack
                 key={g.igdbId ?? g.title}

@@ -34,8 +34,8 @@ export function QueuePanel({
       ]);
       setNowPlaying(state.nowPlaying ?? null);
       setQueue(q);
-    } catch (e: any) {
-      setErr(e.message);
+    } catch (e: { message: string } | unknown) {
+      setErr(e instanceof Error ? e.message : "Failed to load queue");
     } finally {
       setLoading(false);
     }
@@ -55,7 +55,7 @@ export function QueuePanel({
     <Stack gap={3}>
       <Box p={4} borderWidth="1px" borderRadius="lg">
         <Heading size="sm" mb={2}>
-          Now Playing
+          Now Playing...
         </Heading>
 
         {loading ? (

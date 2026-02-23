@@ -5,6 +5,7 @@ export type GameStatus =
   | "COMPLETED"
   | "DROPPED"
   | "PAUSED";
+
 export type PriorityTag = "MAYBE_SOMEDAY" | "FAVORITE" | "MUST_PLAY";
 
 export type Game = {

@@ -13,7 +13,7 @@ export const api = axios.create({
 // Convierte errores de Axios a mensajes útiles
 function toErrorMessage(err: unknown, fallback: string) {
   if (axios.isAxiosError(err)) {
-    const ax = err as AxiosError<any>;
+    const ax = err as AxiosError<{ error?: string; message?: string }>;
     const status = ax.response?.status;
     const data = ax.response?.data;
 

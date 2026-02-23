@@ -15,6 +15,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { apiGet, apiSend } from "@/lib/api";
 import type { Game } from "@/lib/types";
+import GameCard from "./GameCard";
 
 function buildGamesQuery(params: {
   store?: string | null;
@@ -102,35 +103,11 @@ export function GamesGrid({
       {!loading && !err && (
         <Grid templateColumns="repeat(auto-fill, minmax(240px, 1fr))" gap={3}>
           {data.map((g) => (
-            <Box
+            <GameCard
               key={g.igdbId ?? g.title}
-              p={3}
-              borderWidth="1px"
-              borderRadius="lg"
-            >
-              <Stack gap={2}>
-                <Text fontWeight="bold" maxLines={2}>
-                  {g.title} ({g.releaseYear})
-                </Text>
-
-                <HStack wrap="wrap">
-                  <Badge>{g.status}</Badge>
-                  <Badge>{g.priority}</Badge>
-                  {g.store ? <Badge>{g.store}</Badge> : <Badge>NO STORE</Badge>}
-                </HStack>
-
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    if (typeof g.igdbId === "number")
-                      handleAddToQueue(g.igdbId);
-                  }}
-                  disabled={typeof g.igdbId !== "number"}
-                >
-                  Add to Queue
-                </Button>
-              </Stack>
-            </Box>
+              {...g}
+              handleAddToQueue={handleAddToQueue}
+            />
           ))}
         </Grid>
       )}

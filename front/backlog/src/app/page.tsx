@@ -24,6 +24,8 @@ export default function Home() {
           direction="diagonal"
           borderColor="#271E37"
           hoverFillColor="#222222"
+          // hoverColor="#222222"
+          // size={40}
         />
       </Box>
 
