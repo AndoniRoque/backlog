@@ -55,52 +55,59 @@ export default function NowPlaying() {
       <Box position="absolute" inset={0} bg="blackAlpha.700" />
 
       {/* contenido arriba del overlay */}
-      <Tooltip
-        content={
-          game
-            ? `${game.summary ?? ""} (${game.store ?? ""})`
-            : "Nothing playing"
-        }
+      <Flex
+        position="relative"
+        zIndex={1}
+        direction="column"
+        gap={2}
+        minH="160px"
       >
-        <Flex position="relative" zIndex={1} direction="column" gap={2}>
-          <Text fontWeight="bold" fontSize="xs" opacity={0.5}>
-            Now Playing...
-          </Text>
+        <Text fontWeight="bold" fontSize="xs" opacity={0.5}>
+          Now Playing...
+        </Text>
 
-          <Flex direction="column" gap={2} mt={1} flex={1}>
-            <Text fontWeight="bold" fontSize="xl" maxLines={2}>
+        <Flex
+          h={"full"}
+          direction="column"
+          justify={"center"}
+          align={"space-between"}
+          gap={2}
+          mt={1}
+          flex={1}
+        >
+          <Flex justify={"space-between"} align={"center"} h={"full"}>
+            <Text fontWeight="bold" fontSize="xl" maxLines={2} flex={2}>
               {game?.title ?? "Nothing playing"}
             </Text>
-
-            {/* Summary: 1 línea cuando está cerrado + expansión animada */}
-            {summary ? (
-              <Collapsible.Root
-                open={expanded}
-                onOpenChange={(e) => setExpanded(e.open)}
-              >
-                <Collapsible.Content
-                  _closed={{
-                    shadow: "inset 0 -12px 12px -12px var(--shadow-color)",
-                    shadowColor: "rgba(0, 0, 0, 0.7)",
-                  }}
-                >
-                  <Text fontSize="sm" opacity={0.9} mt={2}>
-                    {summary}
-                  </Text>
-                </Collapsible.Content>
-              </Collapsible.Root>
-            ) : (
-              <Text fontSize="sm" opacity={0.8}>
-                No summary available.
-              </Text>
-            )}
-
-            <Flex w="full" justify="flex-end" align="end">
+            <Flex justify="flex-end" align="center">
               {game?.store && <Badge opacity={0.9}>{game.store}</Badge>}
             </Flex>
           </Flex>
+
+          {/* Summary: 1 línea cuando está cerrado + expansión animada */}
+          {summary ? (
+            <Collapsible.Root
+              open={expanded}
+              onOpenChange={(e) => setExpanded(e.open)}
+            >
+              <Collapsible.Content
+                _closed={{
+                  shadow: "inset 0 -12px 12px -12px var(--shadow-color)",
+                  shadowColor: "rgba(0, 0, 0, 0.7)",
+                }}
+              >
+                <Text fontSize="sm" opacity={0.9} mt={2}>
+                  {summary}
+                </Text>
+              </Collapsible.Content>
+            </Collapsible.Root>
+          ) : (
+            <Text fontSize="sm" opacity={0.8}>
+              No summary available.
+            </Text>
+          )}
         </Flex>
-      </Tooltip>
+      </Flex>
     </Flex>
   );
 }
