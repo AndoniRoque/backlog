@@ -19,10 +19,11 @@ export type Game = {
   coverUrl: string | null;
   heroUrl: string | null;
   queuePosition: number | null;
+  summary?: string | null;
 };
 
 export type QueueItem = {
-  igdbId: number | null;
+  igdbId: number;
   title: string;
   queuePosition: number | null;
 };

@@ -2,9 +2,9 @@
 
 import {
   Box,
-  Button,
   Heading,
   HStack,
+  IconButton,
   Spinner,
   Stack,
   Text,
@@ -54,33 +54,6 @@ export function QueuePanel({
   return (
     <Stack gap={3}>
       <Box p={4} borderWidth="1px" borderRadius="lg">
-        <Heading size="sm" mb={2}>
-          Now Playing...
-        </Heading>
-
-        {loading ? (
-          <HStack>
-            <Spinner size="sm" />
-            <Text>Loading…</Text>
-          </HStack>
-        ) : nowPlaying ? (
-          <Stack gap={1}>
-            <Text fontWeight="bold" maxLines={2}>
-              {nowPlaying.title}
-            </Text>
-            <Text fontSize="sm" opacity={0.8}>
-              {nowPlaying.store ?? "No store"}{" "}
-              {typeof nowPlaying.releaseYear === "number"
-                ? `• ${nowPlaying.releaseYear}`
-                : ""}
-            </Text>
-          </Stack>
-        ) : (
-          <Text opacity={0.8}>Nothing playing yet.</Text>
-        )}
-      </Box>
-
-      <Box p={4} borderWidth="1px" borderRadius="lg">
         <HStack justify="space-between" mb={2}>
           <Heading size="sm">Queue</Heading>
           <Text fontSize="sm" opacity={0.8}>
@@ -102,7 +75,7 @@ export function QueuePanel({
           </HStack>
         ) : queue.length ? (
           <Stack gap={2}>
-            {queue.map((item) => (
+            {queue.map((item: QueueItem) => (
               <HStack
                 key={item.igdbId ?? item.title}
                 justify="space-between"
@@ -114,19 +87,17 @@ export function QueuePanel({
                   <Text fontWeight="bold" maxLines={1}>
                     {item.title}
                   </Text>
-                  <Text fontSize="xs" opacity={0.7}>
-                    pos: {item.queuePosition ?? "-"}
-                  </Text>
                 </Box>
 
                 {typeof item.igdbId === "number" && (
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    onClick={() => remove(item.igdbId!)}
+                  <IconButton
+                    aria-label="Remove"
+                    onClick={() => remove(item.igdbId)}
+                    variant="ghost"
+                    size="sm"
                   >
-                    Remove
-                  </Button>
+                    ×
+                  </IconButton>
                 )}
               </HStack>
             ))}

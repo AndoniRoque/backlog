@@ -1,6 +1,7 @@
 "use client";
 
 import { GamesGrid } from "@/components/GamesGrid";
+import NowPlaying from "@/components/NowPlaying";
 import { QueuePanel } from "@/components/QueuePanel";
 import Squares from "@/components/reactBits/Squares";
 import SearchGameIgdb from "@/components/SearchGameIgdb";
@@ -34,7 +35,7 @@ export default function Home() {
         <Flex direction="row" justify={"space-between"} align="center">
           <Title />
 
-          <Box mt={4} maxW="520px">
+          <Box mt={4}>
             <SearchGameIgdb />
           </Box>
         </Flex>
@@ -55,6 +56,7 @@ export default function Home() {
           </GridItem>
 
           <GridItem>
+            <NowPlaying />
             <QueuePanel refreshSignal={refreshSignal} />
           </GridItem>
         </Grid>

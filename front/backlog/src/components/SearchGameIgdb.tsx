@@ -4,6 +4,7 @@ import { apiGet, apiSend } from "@/lib/api";
 import type { Game } from "@/lib/types";
 import { Box, Input, Spinner, Text, HStack, Button } from "@chakra-ui/react";
 import { useEffect, useMemo, useState } from "react";
+import { toaster } from "./ui/toaster";
 
 function useDebouncedValue<T>(value: T, delayMs: number) {
   const [debounced, setDebounced] = useState(value);
@@ -82,7 +83,11 @@ export default function SearchGameIgdb() {
         store: "Steam", // opcional
       });
 
-      setSavedMsg(`Added: ${g.title}`);
+      toaster.create({
+        description: `"${g.title}" added to backlog!`,
+        type: "success",
+        duration: 2000,
+      });
       // opcional: limpiar búsqueda
       // setQuery("");
       // setData([]);
@@ -129,22 +134,15 @@ export default function SearchGameIgdb() {
                 justify="space-between"
                 py={2}
                 borderBottomWidth="1px"
+                onClick={() => addGame(g)}
+                _hover={{ cursor: "pointer" }}
               >
-                <Text fontSize="sm" noOfLines={1}>
+                <Text fontSize="sm" maxLines={1}>
                   <b>{g.title}</b>
                   {typeof g.releaseYear === "number"
                     ? ` (${g.releaseYear})`
                     : ""}
                 </Text>
-
-                <Button
-                  size="xs"
-                  onClick={() => addGame(g)}
-                  isLoading={savingId === g.igdbId}
-                  isDisabled={typeof g.igdbId !== "number"}
-                >
-                  Add
-                </Button>
               </HStack>
             ))}
           </Box>
