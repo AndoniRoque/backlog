@@ -7,7 +7,7 @@ node_modules
 /Docker 
 
 /front/backlog/.next
-/front/backlog/node_modules
+/front/backlog/node_modules/
 /front/backlog/.env.local
 /front/backlog/.env.development.local
 /front/backlog/.env.test.local
