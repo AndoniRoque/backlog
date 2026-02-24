@@ -7,6 +7,7 @@ export async function addFromIgdb(input: {
   igdbId: number;
   priority?: "MAYBE_SOMEDAY" | "FAVORITE" | "MUST_PLAY";
   store?: string;
+  estimatedHours?: number;
 }) {
   const details = await searchGameInfo(input.igdbId);
 
@@ -26,6 +27,7 @@ export async function addFromIgdb(input: {
       developers: details.developers,
       store: input.store,
       priority: (input.priority || "MAYBE_SOMEDAY") as PriorityTag,
+      estimatedHours: input.estimatedHours,
     },
     create: {
       igdbId: details.igdbId,
@@ -37,6 +39,7 @@ export async function addFromIgdb(input: {
       developers: details.developers,
       store: input.store,
       priority: (input.priority || "MAYBE_SOMEDAY") as PriorityTag,
+      estimatedHours: input.estimatedHours,
     },
   });
 }
