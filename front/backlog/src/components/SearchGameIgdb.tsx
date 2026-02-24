@@ -21,7 +21,11 @@ function useDebouncedValue<T>(value: T, delayMs: number) {
   return debounced;
 }
 
-export default function SearchGameIgdb() {
+export default function SearchGameIgdb({
+  onGameAdded,
+}: {
+  onGameAdded?: () => void;
+}) {
   const [data, setData] = useState<Game[]>([]);
   const [query, setQuery] = useState("");
   const debounced = useDebouncedValue(query.trim(), 350);
@@ -101,7 +105,6 @@ export default function SearchGameIgdb() {
         igdbId: selected.igdbId,
         store,
         priority,
-        // si preferís mandar null en vez de ""
         estimatedHours: estimatedHours === "" ? null : estimatedHours,
       });
 
@@ -111,10 +114,10 @@ export default function SearchGameIgdb() {
         duration: 2000,
       });
 
+      onGameAdded?.();
+      setOpen(false);
+      setSelected(null);
       closeDialog();
-      // opcional: limpiar búsqueda
-      // setQuery("");
-      // setData([]);
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : "Failed to add game");
     } finally {

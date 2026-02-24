@@ -14,6 +14,7 @@ export default function Home() {
   // si tus componentes los necesitan:
   const [selectedStore, setSelectedStore] = useState<string | null>(null);
   const [refreshSignal, setRefreshSignal] = useState(0);
+  const [gamesRefreshSignal, setGamesRefreshSignal] = useState(0);
 
   return (
     <Box minH="100vh" position="relative" overflow="hidden">
@@ -38,7 +39,9 @@ export default function Home() {
           </Box>
 
           <Box w={360}>
-            <SearchGameIgdb />
+            <SearchGameIgdb
+              onGameAdded={() => setGamesRefreshSignal((x) => x + 1)}
+            />
           </Box>
         </Flex>
 
@@ -53,6 +56,7 @@ export default function Home() {
           <GridItem overflow="auto" pr={2}>
             <GamesGrid
               selectedStore={selectedStore}
+              refreshSignal={gamesRefreshSignal}
               onQueueChanged={() => setRefreshSignal((x) => x + 1)}
             />
           </GridItem>

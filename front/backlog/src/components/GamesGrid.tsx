@@ -31,9 +31,11 @@ function buildGamesQuery(params: {
 export function GamesGrid({
   selectedStore,
   onQueueChanged,
+  refreshSignal,
 }: {
   selectedStore: string | null;
   onQueueChanged?: () => void;
+  refreshSignal?: number;
 }) {
   const [title, setTitle] = useState("");
   const [data, setData] = useState<Game[]>([]);
@@ -64,7 +66,7 @@ export function GamesGrid({
     return () => {
       cancelled = true;
     };
-  }, [query, selectedStore]);
+  }, [query, selectedStore, refreshSignal]);
 
   async function handleAddToQueue(igdbId: number) {
     await apiSend(`/queue/${igdbId}`, "POST");
