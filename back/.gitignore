@@ -6,6 +6,10 @@ node_modules
 
 /Docker 
 
+/front/backlog
+/front/backlog/.vscode 
+/front/backlog/.env
+/front/backlog/.gitignore
 /front/backlog/.next
 /front/backlog/node_modules/
 /front/backlog/.env.local
