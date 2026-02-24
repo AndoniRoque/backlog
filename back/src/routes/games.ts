@@ -65,7 +65,7 @@ r.get("/:igdbId", async (req, res) => {
 });
 
 r.post("/", async (req, res) => {
-  const { igdbId, priority, store } = req.body;
+  const { igdbId, priority, store, estimatedHours } = req.body;
   if (!igdbId || typeof igdbId !== "number")
     return res.status(400).json({ error: "igdbId required" });
 
@@ -78,8 +78,16 @@ r.post("/", async (req, res) => {
   if (store && typeof store !== "string")
     return res.status(400).json({ error: "Invalid store value" });
 
+  if (estimatedHours && typeof estimatedHours !== "number")
+    return res.status(400).json({ error: "Invalid estimatedHours value" });
+
   try {
-    const saved = await gamesService.addFromIgdb({ igdbId, priority, store });
+    const saved = await gamesService.addFromIgdb({
+      igdbId,
+      priority,
+      store,
+      estimatedHours,
+    });
     res.status(201).json(saved);
   } catch (error: any) {
     console.error("Error adding game:", error);
