@@ -42,8 +42,8 @@ export default function GameCard(props: Props) {
           </Text>
 
           <HStack wrap="wrap">
-            <Badge>{store ?? "NO STORE"}</Badge>
             <Badge>{priority?.replaceAll("_", " ")}</Badge>
+            <Badge>{store ?? "NO STORE"}</Badge>
           </HStack>
         </Stack>
 

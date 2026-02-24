@@ -1,17 +1,7 @@
 "use client";
 
+import { STORE_OPTIONS } from "@/lib/gameOptions";
 import { Box, Button, Heading, Stack, Text } from "@chakra-ui/react";
-
-const STORES = [
-  "Steam",
-  "Epic",
-  "Xbox",
-  "PlayStation",
-  "Nintendo",
-  "GOG",
-  "Origin",
-  "Uplay",
-] as const;
 
 export function SidebarStores({
   selectedStore,
@@ -35,7 +25,7 @@ export function SidebarStores({
           <Text>All</Text>
         </Button>
 
-        {STORES.map((s) => (
+        {STORE_OPTIONS.map((s) => (
           <Button
             key={s}
             variant={selectedStore === s ? "solid" : "outline"}

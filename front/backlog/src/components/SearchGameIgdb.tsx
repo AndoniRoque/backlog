@@ -2,20 +2,13 @@
 
 import { apiGet, apiSend } from "@/lib/api";
 import type { Game } from "@/lib/types";
-import {
-  Box,
-  Input,
-  Spinner,
-  Text,
-  HStack,
-  Button,
-  Dialog,
-  NativeSelect,
-  Field,
-  NumberInput,
-} from "@chakra-ui/react";
+import { Box, Input, Spinner, Text, HStack } from "@chakra-ui/react";
 import { useEffect, useMemo, useState } from "react";
 import { toaster } from "./ui/toaster";
+import AddGameDialog, {
+  type PriorityOption,
+  type StoreOption,
+} from "./AddGameDialog";
 
 function useDebouncedValue<T>(value: T, delayMs: number) {
   const [debounced, setDebounced] = useState(value);
@@ -28,23 +21,6 @@ function useDebouncedValue<T>(value: T, delayMs: number) {
   return debounced;
 }
 
-// Opciones predefinidas por el sistema (ajustalas a tus enums reales)
-const STORE_OPTIONS = [
-  "Steam",
-  "Epic",
-  "Xbox",
-  "PlayStation",
-  "Nintendo",
-  "GOG",
-  "Origin",
-  "Uplay",
-] as const;
-
-const PRIORITY_OPTIONS = ["FAVORITES", "MUST_PLAY", "MAYBE_SOMEDAY"] as const;
-
-type StoreOption = (typeof STORE_OPTIONS)[number];
-type PriorityOption = (typeof PRIORITY_OPTIONS)[number];
-
 export default function SearchGameIgdb() {
   const [data, setData] = useState<Game[]>([]);
   const [query, setQuery] = useState("");
@@ -54,7 +30,7 @@ export default function SearchGameIgdb() {
   const [err, setErr] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<number | null>(null);
 
-  // Dialog controlado (v3)
+  // Dialog controlado
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Game | null>(null);
 
@@ -103,11 +79,15 @@ export default function SearchGameIgdb() {
 
   function openAddDialog(g: Game) {
     setSelected(g);
-    // defaults (personalizalos como quieras)
     setStore("Steam");
     setPriority("MAYBE_SOMEDAY");
     setEstimatedHours("");
     setOpen(true);
+  }
+
+  function closeDialog() {
+    setOpen(false);
+    setSelected(null);
   }
 
   async function confirmAdd() {
@@ -121,7 +101,8 @@ export default function SearchGameIgdb() {
         igdbId: selected.igdbId,
         store,
         priority,
-        estimatedHours,
+        // si preferís mandar null en vez de ""
+        estimatedHours: estimatedHours === "" ? null : estimatedHours,
       });
 
       toaster.create({
@@ -130,13 +111,12 @@ export default function SearchGameIgdb() {
         duration: 2000,
       });
 
-      setOpen(false);
-      setSelected(null);
-      // opcional: limpiar
+      closeDialog();
+      // opcional: limpiar búsqueda
       // setQuery("");
       // setData([]);
-    } catch (e: any) {
-      setErr(e.message ?? "Failed to add game");
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : "Failed to add game");
     } finally {
       setSavingId(null);
     }
@@ -196,92 +176,20 @@ export default function SearchGameIgdb() {
         )}
       </Box>
 
-      {/* Dialog (Modal en v3) */}
-      <Dialog.Root open={open} onOpenChange={(d) => setOpen(d.open)} size="md">
-        <Dialog.Backdrop />
-        <Dialog.Positioner>
-          <Dialog.Content>
-            <Dialog.CloseTrigger />
-            <Dialog.Header>
-              <Dialog.Title>
-                Add to Queue {selected?.title ? `— ${selected.title}` : ""}
-              </Dialog.Title>
-            </Dialog.Header>
-
-            <Dialog.Body>
-              <Field.Root mb="4">
-                <Field.Label>Store</Field.Label>
-                <NativeSelect.Root>
-                  <NativeSelect.Field
-                    value={store}
-                    onChange={(e) => setStore(e.target.value as StoreOption)}
-                  >
-                    {STORE_OPTIONS.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </NativeSelect.Field>
-                  <NativeSelect.Indicator />
-                </NativeSelect.Root>
-              </Field.Root>
-
-              <Field.Root mb="4">
-                <Field.Label>Priority</Field.Label>
-                <NativeSelect.Root>
-                  <NativeSelect.Field
-                    value={priority}
-                    onChange={(e) =>
-                      setPriority(e.target.value as PriorityOption)
-                    }
-                  >
-                    {PRIORITY_OPTIONS.map((p) => (
-                      <option key={p} value={p}>
-                        {p.replaceAll("_", " ")}
-                      </option>
-                    ))}
-                  </NativeSelect.Field>
-                  <NativeSelect.Indicator />
-                </NativeSelect.Root>
-              </Field.Root>
-
-              <Field.Root>
-                <Field.Label>Estimated hours (optional)</Field.Label>
-                <Input
-                  min={0}
-                  value={estimatedHours}
-                  onChange={(details) => {
-                    const n = Number(details.target.value);
-                    setEstimatedHours(Number.isFinite(n) ? n : "");
-                  }}
-                />
-              </Field.Root>
-            </Dialog.Body>
-
-            <Dialog.Footer gap="2">
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setOpen(false);
-                  setSelected(null);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                colorPalette="blue"
-                onClick={confirmAdd}
-                loading={
-                  typeof savingId === "number" && savingId === selected?.igdbId
-                }
-                disabled={!selected || typeof selected.igdbId !== "number"}
-              >
-                Add
-              </Button>
-            </Dialog.Footer>
-          </Dialog.Content>
-        </Dialog.Positioner>
-      </Dialog.Root>
+      <AddGameDialog
+        open={open}
+        onOpenChange={setOpen}
+        game={selected}
+        store={store}
+        onStoreChange={setStore}
+        priority={priority}
+        onPriorityChange={setPriority}
+        estimatedHours={estimatedHours}
+        onEstimatedHoursChange={setEstimatedHours}
+        onConfirm={confirmAdd}
+        onCancel={closeDialog}
+        isSaving={typeof savingId === "number" && savingId === selected?.igdbId}
+      />
     </Box>
   );
 }

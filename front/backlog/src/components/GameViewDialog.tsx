@@ -5,6 +5,7 @@ import {
   Badge,
   Dialog,
   Flex,
+  Icon,
   Image,
   Separator,
   Stack,
@@ -111,7 +112,7 @@ export default function GameViewDialog({
                   <InfoRow label="Developers" value={game?.developers} />
                   <InfoRow
                     label="Estimated hours"
-                    value={game.estimatedHours}
+                    value={`${game.estimatedHours ?? 0} hs.`}
                   />
                 </Stack>
 

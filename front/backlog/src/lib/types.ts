@@ -32,3 +32,21 @@ export type QueueItem = {
 export type StateResponse = {
   nowPlaying: Game | null;
 };
+
+export const STORE_OPTIONS = [
+  "Steam",
+  "Epic",
+  "Xbox",
+  "PlayStation",
+  "Nintendo",
+  "GOG",
+  "Origin",
+  "Uplay",
+  "Itch.io",
+] as const;
+
+export const PRIORITY_OPTIONS = [
+  "FAVORITES",
+  "MUST_PLAY",
+  "MAYBE_SOMEDAY",
+] as const;
