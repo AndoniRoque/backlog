@@ -1,15 +1,12 @@
 "use client";
 
 import {
-  Badge,
   Box,
-  Button,
   Grid,
   Heading,
   HStack,
   Input,
   Spinner,
-  Stack,
   Text,
 } from "@chakra-ui/react";
 import { useEffect, useMemo, useState } from "react";

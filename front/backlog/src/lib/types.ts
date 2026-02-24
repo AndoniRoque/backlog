@@ -20,6 +20,7 @@ export type Game = {
   heroUrl: string | null;
   queuePosition: number | null;
   summary?: string | null;
+  developers?: string[] | null;
 };
 
 export type QueueItem = {

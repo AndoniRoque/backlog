@@ -121,7 +121,7 @@ export default function SearchGameIgdb() {
         igdbId: selected.igdbId,
         store,
         priority,
-        ...(estimatedHours === "" ? {} : { estimatedHours }),
+        estimatedHours,
       });
 
       toaster.create({
