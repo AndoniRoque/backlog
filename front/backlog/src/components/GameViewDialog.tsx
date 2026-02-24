@@ -64,14 +64,14 @@ export default function GameViewDialog({
       <Dialog.Positioner>
         <Dialog.Content>
           <Dialog.CloseTrigger />
-          <Dialog.Header>
+          <Dialog.Header justifyContent={"space-between"}>
             <Dialog.Title>
               {title}{" "}
               {typeof game?.releaseYear === "number"
                 ? `(${game.releaseYear})`
                 : ""}
             </Dialog.Title>
-            <Dialog.Description justifyContent={"center"} gap={2} mt={1}>
+            <Dialog.Description justifyContent={"end"} gap={2} mt={1}>
               <Badge>{game?.store ?? "—"}</Badge>
             </Dialog.Description>
           </Dialog.Header>
