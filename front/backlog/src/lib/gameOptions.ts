@@ -17,5 +17,14 @@ export const PRIORITY_OPTIONS = [
   "MAYBE_SOMEDAY",
 ] as const;
 
+export const STATUS_OPTIONS = [
+  "BACKLOG",
+  "PLAYING",
+  "COMPLETED",
+  "DROPPED",
+  "PAUSED",
+]
+
 export type StoreOption = (typeof STORE_OPTIONS)[number];
 export type PriorityOption = (typeof PRIORITY_OPTIONS)[number];
+export type StatusOption = (typeof STATUS_OPTIONS)[number];

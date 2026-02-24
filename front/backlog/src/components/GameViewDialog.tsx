@@ -5,7 +5,6 @@ import {
   Badge,
   Dialog,
   Flex,
-  Icon,
   Image,
   Separator,
   Stack,
@@ -47,12 +46,7 @@ type Props = {
   onAddToQueue?: (igdbId: number) => void;
 };
 
-export default function GameViewDialog({
-  open,
-  onOpenChange,
-  game,
-  onAddToQueue,
-}: Props) {
+export default function GameViewDialog({ open, onOpenChange, game }: Props) {
   const title = game?.title ?? "Game";
 
   return (
@@ -73,7 +67,7 @@ export default function GameViewDialog({
                 : ""}
             </Dialog.Title>
             <Dialog.Description justifyContent={"end"} gap={2} mt={1}>
-              <Badge>{game?.store ?? "—"}</Badge>
+              <Badge>{game?.igdbId}</Badge>
             </Dialog.Description>
           </Dialog.Header>
 
@@ -104,11 +98,10 @@ export default function GameViewDialog({
                   >
                     <Text fontWeight="semibold">Details</Text>
                     <Flex gap={2}>
-                      <Badge>{game?.status ?? "—"}</Badge>
-                      <Badge>{game?.priority ?? "—"}</Badge>
+                      <Badge>{game?.store ?? "—"}</Badge>
+                      <Badge>{game?.priority.replace("_", " ") ?? "—"}</Badge>
                     </Flex>
                   </Flex>
-                  <InfoRow label="IGDB ID" value={game.igdbId} />
                   <InfoRow label="Developers" value={game?.developers} />
                   <InfoRow
                     label="Estimated hours"

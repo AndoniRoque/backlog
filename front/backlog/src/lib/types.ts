@@ -50,3 +50,11 @@ export const PRIORITY_OPTIONS = [
   "MUST_PLAY",
   "MAYBE_SOMEDAY",
 ] as const;
+
+export const STATUS_OPTIONS = [
+  "BACKLOG",
+  "PLAYING",
+  "COMPLETED",
+  "DROPPED",
+  "PAUSED",
+]

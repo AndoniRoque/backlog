@@ -6,11 +6,11 @@ import {
   Badge,
   Box,
   Flex,
-  HStack,
   IconButton,
   Image,
   Stack,
   Text,
+  VStack,
 } from "@chakra-ui/react";
 import { useState } from "react";
 import GameViewDialog from "./GameViewDialog";
@@ -28,6 +28,7 @@ export default function GameCard(props: Props) {
     store,
     coverUrl,
     handleAddToQueue,
+    status,
   } = props;
 
   const [open, setOpen] = useState(false);
@@ -41,10 +42,11 @@ export default function GameCard(props: Props) {
             {typeof releaseYear === "number" ? ` (${releaseYear})` : ""}
           </Text>
 
-          <HStack wrap="wrap">
+          <VStack wrap="wrap" align={"start"}>
             <Badge>{priority?.replaceAll("_", " ")}</Badge>
             <Badge>{store ?? "NO STORE"}</Badge>
-          </HStack>
+            <Badge>{status ?? "BACKLOG"}</Badge>
+          </VStack>
         </Stack>
 
         {coverUrl && (

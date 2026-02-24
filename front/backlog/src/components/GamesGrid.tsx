@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Badge,
   Box,
   Grid,
   Heading,
@@ -11,8 +12,9 @@ import {
 } from "@chakra-ui/react";
 import { useEffect, useMemo, useState } from "react";
 import { apiGet, apiSend } from "@/lib/api";
-import type { Game } from "@/lib/types";
+import { Game } from "@/lib/types";
 import GameCard from "./GameCard";
+import { STATUS_OPTIONS } from "@/lib/gameOptions";
 
 function buildGamesQuery(params: {
   store?: string | null;
@@ -77,6 +79,11 @@ export function GamesGrid({
     <Box>
       <HStack mb={4} justify="space-between">
         <Heading size="md">All Games</Heading>
+        {STATUS_OPTIONS.map((s) => (
+          <Badge key={s} variant={"outline"}>
+            {s}
+          </Badge>
+        ))}
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
