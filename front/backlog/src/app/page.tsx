@@ -33,9 +33,11 @@ export default function Home() {
       {/* CONTENT */}
       <Box position="relative" zIndex={1} p={6}>
         <Flex direction="row" justify={"space-between"} align="center">
-          <Title />
+          <Box flex={2}>
+            <Title />
+          </Box>
 
-          <Box mt={4}>
+          <Box w={360}>
             <SearchGameIgdb />
           </Box>
         </Flex>

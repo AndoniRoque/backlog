@@ -40,7 +40,7 @@ export function GamesGrid({
 }) {
   const [title, setTitle] = useState("");
   const [data, setData] = useState<Game[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [err, setErr] = useState<string | null>(null);
 
   const query = useMemo(
