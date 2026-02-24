@@ -5,3 +5,10 @@ node_modules
 /generated/prisma
 
 /Docker 
+
+/front/backlog/.next
+/front/backlog/node_modules
+/front/backlog/.env.local
+/front/backlog/.env.development.local
+/front/backlog/.env.test.local
+/front/backlog/.env.production.local
