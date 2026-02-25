@@ -49,6 +49,23 @@ function toggle<T extends string>(
   );
 }
 
+type FilterItem =
+  | { type: "priority"; value: PriorityOption; label: string }
+  | { type: "status"; value: StatusOption; label: string };
+
+const FILTERS: FilterItem[] = [
+  ...PRIORITY_OPTIONS.map((p) => ({
+    type: "priority" as const,
+    value: p,
+    label: PRIORITY_LABEL[p],
+  })),
+  ...STATUS_OPTIONS.map((s) => ({
+    type: "status" as const,
+    value: s,
+    label: s,
+  })),
+];
+
 export function GamesGrid({
   selectedStore,
   onQueueChanged,
@@ -131,42 +148,46 @@ export function GamesGrid({
 
   return (
     <Box>
-      <HStack mb={4} justify="space-between" wrap="wrap" gap={2}>
+      <HStack mb={4} justify={"flex-start"} wrap="wrap" gap={2}>
         <Heading size="md">All Games</Heading>
 
-        {/* Priority filters */}
-        <HStack wrap="wrap">
-          {PRIORITY_OPTIONS.map((p) => {
-            const active = selectedPriorities.includes(p);
-            return (
-              <Badge
-                key={p}
-                as="button"
-                cursor="pointer"
-                variant={active ? "solid" : "outline"}
-                opacity={active ? 1 : 0.6}
-                onClick={() => toggle(p, setSelectedPriorities)}
-              >
-                {PRIORITY_LABEL[p]}
-              </Badge>
-            );
-          })}
-        </HStack>
+        <HStack
+          gap={2}
+          overflowX="auto"
+          whiteSpace="nowrap"
+          pb={1}
+          css={{ "&::-webkit-scrollbar": { display: "none" } }}
+        >
+          {FILTERS.map((f) => {
+            const active =
+              f.type === "priority"
+                ? selectedPriorities.includes(f.value)
+                : selectedStatuses.includes(f.value);
 
-        {/* Status filters */}
-        <HStack wrap="wrap">
-          {STATUS_OPTIONS.map((s) => {
-            const active = selectedStatuses.includes(s);
             return (
               <Badge
-                key={s}
+                key={`${f.type}:${f.value}`}
                 as="button"
                 cursor="pointer"
                 variant={active ? "solid" : "outline"}
-                opacity={active ? 1 : 0.6}
-                onClick={() => toggle(s, setSelectedStatuses)}
+                opacity={active ? 1 : 0.65}
+                onClick={() => {
+                  if (f.type === "priority")
+                    toggle(f.value, setSelectedPriorities);
+                  else toggle(f.value, setSelectedStatuses);
+                }}
+                rounded="full"
+                px={3}
+                py={1.5}
+                alignItems="center"
+                justifyContent="center"
+                textAlign="center"
+                fontSize="sm"
+                lineHeight="1"
+                userSelect="none"
+                whiteSpace="nowrap"
               >
-                {s}
+                {f.label}
               </Badge>
             );
           })}

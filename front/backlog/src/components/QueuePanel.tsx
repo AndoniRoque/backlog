@@ -123,7 +123,6 @@ export function QueuePanel({
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshSignal]);
 
   async function removeOrComplete(igdbId: number) {

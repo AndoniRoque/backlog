@@ -16,7 +16,6 @@ import {
   GridItem,
   HStack,
   Menu,
-  MenuItem,
   Portal,
   Text,
 } from "@chakra-ui/react";
