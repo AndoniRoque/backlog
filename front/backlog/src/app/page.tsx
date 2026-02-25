@@ -16,6 +16,7 @@ import {
   GridItem,
   HStack,
   Menu,
+  MenuItem,
   Portal,
   Text,
 } from "@chakra-ui/react";
@@ -91,21 +92,33 @@ export default function Home() {
             <Portal>
               <Menu.Positioner>
                 <Menu.Content>
-                  <Menu.Item onClick={() => setSelectedStore(null)}>
-                    All stores
-                  </Menu.Item>
-
-                  <Menu.Item onClick={() => setSelectedStore("__NONE__")}>
-                    No store
-                  </Menu.Item>
-
-                  <Menu.Separator />
-
-                  {STORE_OPTIONS.map((s) => (
-                    <Menu.Item key={s} onClick={() => setSelectedStore(s)}>
-                      {s}
+                  <Menu.ItemGroup>
+                    <Menu.Item
+                      value="all"
+                      onClick={() => setSelectedStore(null)}
+                    >
+                      All stores
                     </Menu.Item>
-                  ))}
+
+                    <Menu.Item
+                      value="none"
+                      onClick={() => setSelectedStore("__NONE__")}
+                    >
+                      No store
+                    </Menu.Item>
+
+                    <Menu.Separator />
+
+                    {STORE_OPTIONS.map((s) => (
+                      <Menu.Item
+                        value={s}
+                        key={s}
+                        onClick={() => setSelectedStore(s)}
+                      >
+                        {s}
+                      </Menu.Item>
+                    ))}
+                  </Menu.ItemGroup>
                 </Menu.Content>
               </Menu.Positioner>
             </Portal>
