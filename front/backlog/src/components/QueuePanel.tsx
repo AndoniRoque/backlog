@@ -126,13 +126,8 @@ export function QueuePanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshSignal]);
 
-  async function removeOrComplete(igdbId: number, isFirst: boolean) {
-    if (isFirst) {
-      // nuevo endpoint (ver backend abajo)
-      await apiSend(`/queue/${igdbId}/complete`, "POST");
-    } else {
-      await apiSend(`/queue/${igdbId}`, "DELETE");
-    }
+  async function removeOrComplete(igdbId: number) {
+    await apiSend(`/queue/${igdbId}`, "DELETE");
 
     await load();
     onQueueChanged?.();
@@ -196,9 +191,9 @@ export function QueuePanel({
               try {
                 await persistOrder(next);
                 onQueueChanged?.();
-              } catch (e: any) {
+              } catch (e) {
                 // rollback si falla
-                setErr(e?.message ?? "Failed to reorder queue");
+                console.error(e);
                 setQueue(queue);
               }
             }}

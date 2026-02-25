@@ -16,6 +16,11 @@ export default function Home() {
   const [refreshSignal, setRefreshSignal] = useState(0);
   const [gamesRefreshSignal, setGamesRefreshSignal] = useState(0);
 
+  const handleQueueChanged = () => {
+    setRefreshSignal((x) => x + 1);
+    setGamesRefreshSignal((x) => x + 1);
+  };
+
   return (
     <Box minH="100vh" position="relative" overflow="hidden">
       {/* BACKGROUND */}
@@ -57,7 +62,7 @@ export default function Home() {
             <GamesGrid
               selectedStore={selectedStore}
               refreshSignal={gamesRefreshSignal}
-              onQueueChanged={() => setRefreshSignal((x) => x + 1)}
+              onQueueChanged={handleQueueChanged}
             />
           </GridItem>
 
@@ -65,7 +70,7 @@ export default function Home() {
             <NowPlaying refreshSignal={refreshSignal} />
             <QueuePanel
               refreshSignal={refreshSignal}
-              onQueueChanged={() => setRefreshSignal((x) => x + 1)}
+              onQueueChanged={handleQueueChanged}
             />
           </GridItem>
         </Grid>
