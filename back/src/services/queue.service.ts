@@ -90,18 +90,27 @@ export async function setQueueOrder(igdbIds: number[]) {
 
 export async function removeFromQueue(igdbId: number) {
   return prisma.$transaction(async (tx) => {
+    const head = await tx.game.findFirst({
+      where: { queuePosition: { not: null } },
+      orderBy: { queuePosition: "asc" },
+      select: { igdbId: true },
+    });
+
+    const isHead = head?.igdbId === igdbId;
+
     const updated = await tx.game.update({
       where: { igdbId },
-      data: { queuePosition: null },
+      data: {
+        queuePosition: null,
+        ...(isHead ? { status: "COMPLETED" as const } : {}),
+      },
       select: { igdbId: true, title: true, queuePosition: true },
     });
 
     await syncPlayingWithQueueHead(tx);
-
     return updated;
   });
 }
-
 async function syncPlayingWithQueueHead(tx: any) {
   const head = await tx.game.findFirst({
     where: { queuePosition: { not: null } },
