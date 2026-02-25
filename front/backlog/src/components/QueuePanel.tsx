@@ -130,6 +130,7 @@ export function QueuePanel({
     await apiSend(`/queue/${igdbId}`, "DELETE");
 
     await load();
+
     onQueueChanged?.();
   }
 
