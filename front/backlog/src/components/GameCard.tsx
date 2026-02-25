@@ -11,7 +11,6 @@ import {
   Image,
   Stack,
   Text,
-  VStack,
 } from "@chakra-ui/react";
 import { useState } from "react";
 import GameViewDialog from "./GameViewDialog";
@@ -36,41 +35,54 @@ export default function GameCard(props: Props) {
   const [open, setOpen] = useState(false);
 
   return (
-    <Box p={3} borderWidth="1px" borderRadius="lg">
-      <Flex gap={2} direction={{ base: "column", md: "row" }} align="center">
-        <Stack gap={2} flex={2}>
-          <Text fontWeight="bold" maxLines={2}>
+    <Box p={3} borderWidth="1px" borderRadius="lg" position="relative">
+      {/* store icon */}
+      <Box position="absolute" top={2} right={2}>
+        <StoreIcon name={store} />
+      </Box>
+
+      {/* top content */}
+      <Flex gap={3} align="stretch">
+        {/* text */}
+        <Stack gap={2} minW={0} flex={1}>
+          <Text fontWeight="bold" maxLines={2} pr={10 /* espacio para icono */}>
             {title}
             {typeof releaseYear === "number" ? ` (${releaseYear})` : ""}
           </Text>
 
-          <VStack wrap="wrap" align={"start"}>
-            <HStack>
-              <VStack wrap="wrap" align={"start"}>
-                <Badge>{priority?.replaceAll("_", " ")}</Badge>
-                <Badge>{status ?? "BACKLOG"}</Badge>
-              </VStack>
-            </HStack>
-          </VStack>
+          <HStack wrap="wrap" gap={2}>
+            {priority ? (
+              <Badge>{priority.replaceAll("_", " ")}</Badge>
+            ) : (
+              <Badge opacity={0.7}>No priority</Badge>
+            )}
+            <Badge>{status ?? "BACKLOG"}</Badge>
+          </HStack>
         </Stack>
 
-        <Box position={"relative"}>
-          <Box position={"absolute"} right={1}>
-            <StoreIcon name={store} />
-          </Box>
-          {coverUrl && (
+        {/* cover */}
+        <Box
+          flexShrink={0}
+          w={{ base: "92px", md: "110px" }}
+          h={{ base: "128px", md: "148px" }}
+          borderRadius="md"
+          overflow="hidden"
+          bg="blackAlpha.200"
+        >
+          {coverUrl ? (
             <Image
               src={coverUrl}
               alt={`${title} cover`}
+              w="100%"
+              h="100%"
               objectFit="cover"
-              maxH={32}
-              borderRadius="md"
             />
-          )}
+          ) : null}
         </Box>
       </Flex>
 
-      <Flex w="full" justify="space-between" gap={2} mt={2}>
+      {/* actions */}
+      <Flex w="full" justify="space-between" gap={2} mt={3}>
         <IconButton aria-label="Edit game" variant="outline" size="sm">
           <EditIcon boxSize={3} />
         </IconButton>
@@ -79,7 +91,7 @@ export default function GameCard(props: Props) {
           aria-label="View game"
           variant="outline"
           size="sm"
-          flex={2}
+          flex={1}
           onClick={() => setOpen(true)}
         >
           <ViewIcon />
