@@ -38,4 +38,19 @@ r.put("/", async (req, res) => {
   }
 });
 
+r.delete("/:igdbId", async (req, res) => {
+  const { igdbId } = req.params;
+
+  if (isNaN(parseInt(igdbId))) {
+    return res.status(400).json({ error: "Invalid igdbId" });
+  }
+
+  try {
+    await queueService.removeFromQueue(parseInt(igdbId));
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 export default r;
