@@ -32,12 +32,13 @@ import { CSS } from "@dnd-kit/utilities";
 
 function SortableQueueRow({
   item,
+  isFirst,
   onRemove,
 }: {
   item: QueueItem;
-  onRemove: (igdbId: number) => void;
+  isFirst: boolean;
+  onRemove: (igdbId: number, isFirst: boolean) => void;
 }) {
-  // id debe ser estable y único (igdbId ideal)
   const id = String(item.igdbId);
 
   const {
@@ -77,11 +78,10 @@ function SortableQueueRow({
 
       {typeof item.igdbId === "number" && (
         <IconButton
-          aria-label="Remove"
+          aria-label={isFirst ? "Complete & remove" : "Remove"}
           variant="ghost"
           size="sm"
-          onClick={() => onRemove(item.igdbId!)}
-          // 👇 evita que el click/press empiece un drag
+          onClick={() => onRemove(item.igdbId!, isFirst)}
           onPointerDown={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
         >
@@ -91,7 +91,6 @@ function SortableQueueRow({
     </HStack>
   );
 }
-
 export function QueuePanel({
   refreshSignal,
   onQueueChanged,
@@ -127,9 +126,16 @@ export function QueuePanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshSignal]);
 
-  async function remove(igdbId: number) {
-    await apiSend(`/queue/${igdbId}`, "DELETE");
+  async function removeOrComplete(igdbId: number, isFirst: boolean) {
+    if (isFirst) {
+      // nuevo endpoint (ver backend abajo)
+      await apiSend(`/queue/${igdbId}/complete`, "POST");
+    } else {
+      await apiSend(`/queue/${igdbId}`, "DELETE");
+    }
+
     await load();
+    onQueueChanged?.();
   }
 
   // sensores (mouse/touch + teclado)
@@ -199,11 +205,12 @@ export function QueuePanel({
           >
             <SortableContext items={ids} strategy={verticalListSortingStrategy}>
               <Stack gap={2}>
-                {queue.map((item) => (
+                {queue.map((item, index) => (
                   <SortableQueueRow
                     key={item.igdbId ?? item.title}
                     item={item}
-                    onRemove={remove}
+                    isFirst={index === 0}
+                    onRemove={removeOrComplete}
                   />
                 ))}
               </Stack>
