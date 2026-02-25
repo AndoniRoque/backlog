@@ -55,10 +55,7 @@ export function QueuePanel({
     <Stack gap={3}>
       <Box p={4} borderWidth="1px" borderRadius="lg">
         <HStack justify="space-between" mb={2}>
-          <Heading size="sm">Queue</Heading>
-          <Text fontSize="sm" opacity={0.8}>
-            {queue.length}
-          </Text>
+          <Heading size="sm">Play next...</Heading>
         </HStack>
 
         {err && (

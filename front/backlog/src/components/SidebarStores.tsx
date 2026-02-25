@@ -1,6 +1,7 @@
 "use client";
 
 import { STORE_OPTIONS } from "@/lib/gameOptions";
+import StoreIcon from "@/lib/storeIcons";
 import { Box, Button, Heading, Stack, Text } from "@chakra-ui/react";
 
 export function SidebarStores({
@@ -32,6 +33,7 @@ export function SidebarStores({
             onClick={() => onSelectStore(s)}
             justifyContent="space-between"
           >
+            <StoreIcon name={s} />
             <Text>{s}</Text>
           </Button>
         ))}

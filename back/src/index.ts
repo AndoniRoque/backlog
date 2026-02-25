@@ -17,3 +17,5 @@ const port = Number(process.env.PORT ?? 4000);
 app.listen(port, () =>
   console.log(`API listening on http://localhost:${port}`),
 );
+
+// TODO: Una ruta "estadísticas o resultados" que me devuelva lo juegado en el año, lo terminado, lo favorito.

@@ -6,6 +6,7 @@ import {
   Badge,
   Box,
   Flex,
+  HStack,
   IconButton,
   Image,
   Stack,
@@ -14,6 +15,7 @@ import {
 } from "@chakra-ui/react";
 import { useState } from "react";
 import GameViewDialog from "./GameViewDialog";
+import StoreIcon from "@/lib/storeIcons";
 
 type Props = Game & {
   handleAddToQueue: (igdbId: number) => void;
@@ -43,21 +45,29 @@ export default function GameCard(props: Props) {
           </Text>
 
           <VStack wrap="wrap" align={"start"}>
-            <Badge>{priority?.replaceAll("_", " ")}</Badge>
-            <Badge>{store ?? "NO STORE"}</Badge>
-            <Badge>{status ?? "BACKLOG"}</Badge>
+            <HStack>
+              <VStack wrap="wrap" align={"start"}>
+                <Badge>{priority?.replaceAll("_", " ")}</Badge>
+                <Badge>{status ?? "BACKLOG"}</Badge>
+              </VStack>
+            </HStack>
           </VStack>
         </Stack>
 
-        {coverUrl && (
-          <Image
-            src={coverUrl}
-            alt={`${title} cover`}
-            objectFit="cover"
-            maxH={32}
-            borderRadius="md"
-          />
-        )}
+        <Box position={"relative"}>
+          <Box position={"absolute"} right={1}>
+            <StoreIcon name={store} />
+          </Box>
+          {coverUrl && (
+            <Image
+              src={coverUrl}
+              alt={`${title} cover`}
+              objectFit="cover"
+              maxH={32}
+              borderRadius="md"
+            />
+          )}
+        </Box>
       </Flex>
 
       <Flex w="full" justify="space-between" gap={2} mt={2}>

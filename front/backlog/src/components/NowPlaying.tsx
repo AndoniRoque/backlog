@@ -2,9 +2,9 @@
 
 import { api } from "@/lib/api";
 import type { Game } from "@/lib/types";
-import { Flex, Text, Box, Badge, Collapsible } from "@chakra-ui/react";
+import { Flex, Text, Box, Collapsible } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
-import { Tooltip } from "./ui/tooltip";
+import StoreIcon from "@/lib/storeIcons";
 
 export default function NowPlaying() {
   const [game, setGame] = useState<Game | null>(null);
@@ -62,9 +62,14 @@ export default function NowPlaying() {
         gap={2}
         minH="160px"
       >
-        <Text fontWeight="bold" fontSize="xs" opacity={0.5}>
-          Now Playing...
-        </Text>
+        <Flex justify={"space-between"} align={"center"}>
+          <Text fontWeight="bold" fontSize="xs" opacity={0.5}>
+            Now Playing...
+          </Text>
+          <Flex justify="flex-end" align="center">
+            <StoreIcon name={game?.store} />
+          </Flex>
+        </Flex>
 
         <Flex
           h={"full"}
@@ -79,9 +84,6 @@ export default function NowPlaying() {
             <Text fontWeight="bold" fontSize="xl" maxLines={2} flex={2}>
               {game?.title ?? "Nothing playing"}
             </Text>
-            <Flex justify="flex-end" align="center">
-              {game?.store && <Badge opacity={0.9}>{game.store}</Badge>}
-            </Flex>
           </Flex>
 
           {/* Summary: 1 línea cuando está cerrado + expansión animada */}
