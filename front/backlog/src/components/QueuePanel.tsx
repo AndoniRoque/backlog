@@ -9,14 +9,95 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { apiGet, apiSend } from "@/lib/api";
 import type { QueueItem, StateResponse } from "@/lib/types";
 
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+function SortableQueueRow({
+  item,
+  onRemove,
+}: {
+  item: QueueItem;
+  onRemove: (igdbId: number) => void;
+}) {
+  // id debe ser estable y único (igdbId ideal)
+  const id = String(item.igdbId);
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+
+  return (
+    <HStack
+      ref={setNodeRef}
+      style={style}
+      justify="space-between"
+      p={2}
+      borderWidth="1px"
+      borderRadius="md"
+      cursor={isDragging ? "grabbing" : "grab"}
+      userSelect="none"
+      _hover={{ bg: "blackAlpha.50" }}
+      {...attributes}
+      {...listeners}
+    >
+      <Box minW={0} flex={1}>
+        <Text fontWeight="bold" maxLines={1}>
+          {item.title}
+        </Text>
+      </Box>
+
+      {typeof item.igdbId === "number" && (
+        <IconButton
+          aria-label="Remove"
+          variant="ghost"
+          size="sm"
+          onClick={() => onRemove(item.igdbId!)}
+          // 👇 evita que el click/press empiece un drag
+          onPointerDown={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+        >
+          ×
+        </IconButton>
+      )}
+    </HStack>
+  );
+}
+
 export function QueuePanel({
   refreshSignal,
+  onQueueChanged,
 }: {
-  refreshSignal: number; // incrementalo desde Home para forzar refetch
+  refreshSignal: number;
+  onQueueChanged?: () => void;
 }) {
   const [nowPlaying, setNowPlaying] =
     useState<StateResponse["nowPlaying"]>(null);
@@ -34,7 +115,7 @@ export function QueuePanel({
       ]);
       setNowPlaying(state.nowPlaying ?? null);
       setQueue(q);
-    } catch (e: { message: string } | unknown) {
+    } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : "Failed to load queue");
     } finally {
       setLoading(false);
@@ -49,6 +130,25 @@ export function QueuePanel({
   async function remove(igdbId: number) {
     await apiSend(`/queue/${igdbId}`, "DELETE");
     await load();
+  }
+
+  // sensores (mouse/touch + teclado)
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor),
+  );
+
+  // ids para SortableContext
+  const ids = useMemo(() => queue.map((q) => String(q.igdbId)), [queue]);
+
+  async function persistOrder(next: QueueItem[]) {
+    // solo items con igdbId válido
+    const igdbIds = next
+      .map((x) => x.igdbId)
+      .filter((x): x is number => typeof x === "number");
+
+    // backend: PUT /queue { igdbIds }
+    await apiSend("/queue", "PUT", { igdbIds });
   }
 
   return (
@@ -71,34 +171,44 @@ export function QueuePanel({
             <Text>Loading queue…</Text>
           </HStack>
         ) : queue.length ? (
-          <Stack gap={2}>
-            {queue.map((item: QueueItem) => (
-              <HStack
-                key={item.igdbId ?? item.title}
-                justify="space-between"
-                p={2}
-                borderWidth="1px"
-                borderRadius="md"
-              >
-                <Box>
-                  <Text fontWeight="bold" maxLines={1}>
-                    {item.title}
-                  </Text>
-                </Box>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={async (event) => {
+              const { active, over } = event;
+              if (!over) return;
+              if (active.id === over.id) return;
 
-                {typeof item.igdbId === "number" && (
-                  <IconButton
-                    aria-label="Remove"
-                    onClick={() => remove(item.igdbId)}
-                    variant="ghost"
-                    size="sm"
-                  >
-                    ×
-                  </IconButton>
-                )}
-              </HStack>
-            ))}
-          </Stack>
+              const oldIndex = ids.indexOf(String(active.id));
+              const newIndex = ids.indexOf(String(over.id));
+              if (oldIndex < 0 || newIndex < 0) return;
+
+              const next = arrayMove(queue, oldIndex, newIndex);
+
+              setQueue(next);
+
+              try {
+                await persistOrder(next);
+                onQueueChanged?.();
+              } catch (e: any) {
+                // rollback si falla
+                setErr(e?.message ?? "Failed to reorder queue");
+                setQueue(queue);
+              }
+            }}
+          >
+            <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+              <Stack gap={2}>
+                {queue.map((item) => (
+                  <SortableQueueRow
+                    key={item.igdbId ?? item.title}
+                    item={item}
+                    onRemove={remove}
+                  />
+                ))}
+              </Stack>
+            </SortableContext>
+          </DndContext>
         ) : (
           <Text opacity={0.8}>Queue is empty.</Text>
         )}

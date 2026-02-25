@@ -12,7 +12,7 @@ export const STORE_OPTIONS = [
 ] as const;
 
 export const PRIORITY_OPTIONS = [
-  "FAVORITES",
+  "FAVORITE",
   "MUST_PLAY",
   "MAYBE_SOMEDAY",
 ] as const;
@@ -23,7 +23,7 @@ export const STATUS_OPTIONS = [
   "COMPLETED",
   "DROPPED",
   "PAUSED",
-]
+];
 
 export type StoreOption = (typeof STORE_OPTIONS)[number];
 export type PriorityOption = (typeof PRIORITY_OPTIONS)[number];

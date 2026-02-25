@@ -62,8 +62,11 @@ export default function Home() {
           </GridItem>
 
           <GridItem>
-            <NowPlaying />
-            <QueuePanel refreshSignal={refreshSignal} />
+            <NowPlaying refreshSignal={refreshSignal} />
+            <QueuePanel
+              refreshSignal={refreshSignal}
+              onQueueChanged={() => setRefreshSignal((x) => x + 1)}
+            />
           </GridItem>
         </Grid>
       </Box>

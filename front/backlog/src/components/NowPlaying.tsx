@@ -6,7 +6,11 @@ import { Flex, Text, Box, Collapsible } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import StoreIcon from "@/lib/storeIcons";
 
-export default function NowPlaying() {
+export default function NowPlaying({
+  refreshSignal,
+}: {
+  refreshSignal?: number;
+}) {
   const [game, setGame] = useState<Game | null>(null);
   const [expanded, setExpanded] = useState(false);
 
@@ -15,13 +19,13 @@ export default function NowPlaying() {
       try {
         const res = await api.get("/state");
         setGame(res.data.nowPlaying ?? null);
-        setExpanded(false); // si cambia el juego, colapsa
+        setExpanded(false);
       } catch (error) {
         console.error("Error fetching now playing game:", error);
       }
     };
     fetchNowPlaying();
-  }, []);
+  }, [refreshSignal]);
 
   const hero = game?.heroUrl || game?.coverUrl || null;
   const summary = game?.summary?.trim() ?? "";
