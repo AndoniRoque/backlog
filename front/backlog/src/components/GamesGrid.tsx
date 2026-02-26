@@ -9,7 +9,7 @@ import {
   Spinner,
   Text,
 } from "@chakra-ui/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { apiGet, apiSend } from "@/lib/api";
 import { Game } from "@/lib/types";
 import GameCard from "./GameCard";
@@ -93,6 +93,9 @@ export function GamesGrid({
     [selectedStore, title],
   );
 
+  const [visibleCount, setVisibleCount] = useState(20);
+  const loaderRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -119,6 +122,24 @@ export function GamesGrid({
       cancelled = true;
     };
   }, [query, selectedStore, refreshSignal]);
+
+  useEffect(() => {
+    const el = loaderRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((c) => c + 20);
+        }
+      },
+      { threshold: 1 },
+    );
+
+    observer.observe(el);
+
+    return () => observer.disconnect();
+  }, []);
 
   async function handleAddToQueue(igdbId: number) {
     await apiSend(`/queue/${igdbId}`, "POST");
@@ -184,6 +205,10 @@ export function GamesGrid({
 
     return rows;
   }, [data, selectedStatuses, selectedPriorities, sortBy, sortDir]);
+
+  useEffect(() => {
+    setVisibleCount(20);
+  }, [filteredData]);
 
   return (
     <Box>
@@ -270,19 +295,22 @@ export function GamesGrid({
       )}
 
       {!loading && !err && (
-        <Grid templateColumns="repeat(auto-fill, minmax(240px, 1fr))" gap={3}>
-          {filteredData.map((g) => (
-            <GameCard
-              key={g.igdbId ?? g.title}
-              {...g}
-              handleAddToQueue={handleAddToQueue}
-              onGamePatched={handleGamePatched}
-              onGameDeleted={handleGameDeleted}
-              onQueueChanged={onQueueChanged}
-            />
-          ))}
-        </Grid>
+        <>
+          <Grid templateColumns="repeat(auto-fill, minmax(240px, 1fr))" gap={3}>
+            {filteredData.slice(0, visibleCount).map((g) => (
+              <GameCard
+                key={g.igdbId ?? g.title}
+                {...g}
+                handleAddToQueue={handleAddToQueue}
+                onGamePatched={handleGamePatched}
+                onGameDeleted={handleGameDeleted}
+                onQueueChanged={onQueueChanged}
+              />
+            ))}
+          </Grid>
+        </>
       )}
+      <div ref={loaderRef} style={{ height: 1 }} />
     </Box>
   );
 }
