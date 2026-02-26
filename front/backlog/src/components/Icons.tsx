@@ -22,13 +22,13 @@ export const SteamIcon = createIcon({
           y2="30"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#111D2E" />
-          <stop offset="0.21248" stop-color="#051839" />
-          <stop offset="0.40695" stop-color="#0A1B48" />
-          <stop offset="0.5811" stop-color="#132E62" />
-          <stop offset="0.7376" stop-color="#144B7E" />
-          <stop offset="0.87279" stop-color="#136497" />
-          <stop offset="1" stop-color="#1387B8" />
+          <stop stopColor="#111D2E" />
+          <stop offset="0.21248" stopColor="#051839" />
+          <stop offset="0.40695" stopColor="#0A1B48" />
+          <stop offset="0.5811" stopColor="#132E62" />
+          <stop offset="0.7376" stopColor="#144B7E" />
+          <stop offset="0.87279" stopColor="#136497" />
+          <stop offset="1" stopColor="#1387B8" />
         </linearGradient>
       </defs>
     </>
@@ -78,8 +78,8 @@ export const OriginIcon = createIcon({
           y2="100%"
           id="linearGradient-1"
         >
-          <stop stop-color="#FF9900" offset="0%"></stop>
-          <stop stop-color="#F05A22" offset="100%"></stop>
+          <stop stopColor="#FF9900" offset="0%"></stop>
+          <stop stopColor="#F05A22" offset="100%"></stop>
         </linearGradient>
       </defs>
       <g>
