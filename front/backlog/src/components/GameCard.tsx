@@ -11,6 +11,7 @@ import {
   Image,
   Stack,
   Text,
+  VStack,
 } from "@chakra-ui/react";
 import { useState } from "react";
 import GameViewDialog from "./GameViewDialog";
@@ -30,6 +31,7 @@ export default function GameCard(props: Props) {
     coverUrl,
     handleAddToQueue,
     status,
+    estimatedHours,
   } = props;
 
   const [open, setOpen] = useState(false);
@@ -45,19 +47,26 @@ export default function GameCard(props: Props) {
       <Flex gap={3} align="stretch">
         {/* text */}
         <Stack gap={2} minW={0} flex={1}>
-          <Text fontWeight="bold" maxLines={2} pr={10 /* espacio para icono */}>
-            {title}
-            {typeof releaseYear === "number" ? ` (${releaseYear})` : ""}
-          </Text>
+          <VStack justify={"space-between"} h={"full"}>
+            <Box>
+              <Text fontWeight="bold" truncate lineClamp="2">
+                {title}
+                {typeof releaseYear === "number" ? ` (${releaseYear})` : ""}
+              </Text>
 
-          <HStack wrap="wrap" gap={2}>
-            {priority ? (
-              <Badge>{priority.replaceAll("_", " ")}</Badge>
-            ) : (
-              <Badge opacity={0.7}>No priority</Badge>
-            )}
-            <Badge>{status ?? "BACKLOG"}</Badge>
-          </HStack>
+              <HStack wrap="wrap" gap={2}>
+                {priority ? (
+                  <Badge>{priority.replaceAll("_", " ")}</Badge>
+                ) : (
+                  <Badge opacity={0.7}>No priority</Badge>
+                )}
+                <Badge>{status ?? "BACKLOG"}</Badge>
+              </HStack>
+            </Box>
+            <Text w={"full"}>
+              {estimatedHours ? estimatedHours + " Hours" : "-"}
+            </Text>
+          </VStack>
         </Stack>
 
         {/* cover */}
