@@ -4,7 +4,6 @@ import {
   Badge,
   Box,
   Grid,
-  Heading,
   HStack,
   Input,
   Spinner,
@@ -123,6 +122,12 @@ export function GamesGrid({
     onQueueChanged?.();
   }
 
+  function handleGamePatched(updated: Game) {
+    setData((prev) =>
+      prev.map((g) => (g.igdbId === updated.igdbId ? { ...g, ...updated } : g)),
+    );
+  }
+
   const filteredData = useMemo(() => {
     return data.filter((g: Game) => {
       const gamePriorities: PriorityOption[] = Array.isArray(g.priority)
@@ -221,6 +226,7 @@ export function GamesGrid({
               key={g.igdbId ?? g.title}
               {...g}
               handleAddToQueue={handleAddToQueue}
+              onGamePatched={handleGamePatched} // ✅ AGREGAR
             />
           ))}
         </Grid>

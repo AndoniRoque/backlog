@@ -23,6 +23,7 @@ import { apiSend } from "@/lib/api";
 
 type Props = Game & {
   handleAddToQueue: (igdbId: number) => void;
+  onGamePatched?: (updated: Game) => void;
 };
 
 export default function GameCard(props: Props) {
@@ -70,6 +71,13 @@ export default function GameCard(props: Props) {
     setSaving(true);
     try {
       await apiSend(`/games/${igdbId}`, "PATCH", {
+        store: formStore,
+        priority: formPriority,
+        estimatedHours: formHours === "" ? null : formHours,
+      });
+
+      props.onGamePatched?.({
+        ...props,
         store: formStore,
         priority: formPriority,
         estimatedHours: formHours === "" ? null : formHours,
