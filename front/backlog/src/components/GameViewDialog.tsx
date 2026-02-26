@@ -1,5 +1,6 @@
 "use client";
 
+import StoreIcon from "@/lib/storeIcons";
 import type { Game } from "@/lib/types";
 import {
   Badge,
@@ -67,6 +68,7 @@ export default function GameViewDialog({ open, onOpenChange, game }: Props) {
                 : ""}
             </Dialog.Title>
             <Dialog.Description justifyContent={"end"} gap={2} mt={1}>
+              <Badge>{game?.priority.replace("_", " ") ?? "—"}</Badge>
               <Badge>{game?.igdbId}</Badge>
             </Dialog.Description>
           </Dialog.Header>
@@ -98,8 +100,7 @@ export default function GameViewDialog({ open, onOpenChange, game }: Props) {
                   >
                     <Text fontWeight="semibold">Details</Text>
                     <Flex gap={2}>
-                      <Badge>{game?.store ?? "—"}</Badge>
-                      <Badge>{game?.priority.replace("_", " ") ?? "—"}</Badge>
+                      <StoreIcon />
                     </Flex>
                   </Flex>
                   <InfoRow label="Developers" value={game?.developers} />

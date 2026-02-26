@@ -16,6 +16,10 @@ import {
 import { useState } from "react";
 import GameViewDialog from "./GameViewDialog";
 import StoreIcon from "@/lib/storeIcons";
+import AddGameDialog from "./AddGameDialog";
+import { PriorityOption, StoreOption } from "@/lib/gameOptions";
+import { toaster } from "./ui/toaster";
+import { apiSend } from "@/lib/api";
 
 type Props = Game & {
   handleAddToQueue: (igdbId: number) => void;
@@ -35,6 +39,53 @@ export default function GameCard(props: Props) {
   } = props;
 
   const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const [formStore, setFormStore] = useState<StoreOption>(store);
+  const [formPriority, setFormPriority] = useState<PriorityOption>(
+    (priority as PriorityOption) ?? "MAYBE_SOMEDAY",
+  );
+  const [formHours, setFormHours] = useState<number | "">(estimatedHours ?? "");
+
+  function openEdit() {
+    // Poblar SIEMPRE desde props para evitar stale state
+    setFormStore((store as StoreOption) ?? "Steam");
+    setFormPriority((priority as PriorityOption) ?? "MAYBE_SOMEDAY");
+    setFormHours(estimatedHours ?? "");
+    setEditOpen(true);
+  }
+
+  function closeEdit() {
+    setEditOpen(false);
+  }
+
+  async function confirmEdit() {
+    // si tu API edita por id:
+    if (typeof igdbId !== "number") {
+      toaster.create({ type: "error", description: "Missing game id" });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await apiSend(`/games/${igdbId}`, "PATCH", {
+        store: formStore,
+        priority: formPriority,
+        estimatedHours: formHours === "" ? null : formHours,
+      });
+
+      toaster.create({ type: "success", description: `"${title}" updated!` });
+      closeEdit();
+    } catch (e: unknown) {
+      toaster.create({
+        type: "error",
+        description: e instanceof Error ? e.message : "Failed to update game",
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <Box p={3} borderWidth="1px" borderRadius="lg" position="relative">
@@ -92,7 +143,12 @@ export default function GameCard(props: Props) {
 
       {/* actions */}
       <Flex w="full" justify="space-between" gap={2} mt={3}>
-        <IconButton aria-label="Edit game" variant="outline" size="sm">
+        <IconButton
+          aria-label="Edit game"
+          variant="outline"
+          size="sm"
+          onClick={openEdit}
+        >
           <EditIcon boxSize={3} />
         </IconButton>
 
@@ -123,6 +179,22 @@ export default function GameCard(props: Props) {
         onOpenChange={setOpen}
         game={props}
         onAddToQueue={handleAddToQueue}
+      />
+
+      <AddGameDialog
+        mode="edit"
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        game={props} // le pasás el juego completo
+        store={formStore}
+        onStoreChange={setFormStore}
+        priority={formPriority}
+        onPriorityChange={setFormPriority}
+        estimatedHours={formHours}
+        onEstimatedHoursChange={setFormHours}
+        onConfirm={confirmEdit}
+        onCancel={closeEdit}
+        isSaving={saving}
       />
     </Box>
   );

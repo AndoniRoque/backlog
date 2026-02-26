@@ -180,6 +180,7 @@ export default function SearchGameIgdb({
       </Box>
 
       <AddGameDialog
+        mode="create"
         open={open}
         onOpenChange={setOpen}
         game={selected}

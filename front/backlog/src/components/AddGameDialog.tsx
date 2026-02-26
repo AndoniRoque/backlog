@@ -8,27 +8,23 @@ export type StoreOption = (typeof STORE_OPTIONS)[number];
 export type PriorityOption = (typeof PRIORITY_OPTIONS)[number];
 
 type Props = {
+  mode: "create" | "edit";
   open: boolean;
   onOpenChange: (open: boolean) => void;
-
   game: Game | null;
-
   store: StoreOption;
   onStoreChange: (v: StoreOption) => void;
-
   priority: PriorityOption;
   onPriorityChange: (v: PriorityOption) => void;
-
   estimatedHours: number | "";
   onEstimatedHoursChange: (v: number | "") => void;
-
   onConfirm: () => void;
   onCancel: () => void;
-
   isSaving?: boolean;
 };
 
 export default function AddGameDialog({
+  mode,
   open,
   onOpenChange,
   game,
@@ -54,7 +50,8 @@ export default function AddGameDialog({
           <Dialog.CloseTrigger onClick={onCancel} />
           <Dialog.Header>
             <Dialog.Title>
-              Add to Queue {game?.title ? `— ${game.title}` : ""}
+              {mode === "edit" ? "Edit Game" : "Create Game"}{" "}
+              {game?.title ? `— ${game.title}` : ""}
             </Dialog.Title>
           </Dialog.Header>
 
@@ -121,7 +118,7 @@ export default function AddGameDialog({
               loading={!!isSaving}
               disabled={!game || typeof game.igdbId !== "number"}
             >
-              Add
+              {mode === "edit" ? "Edit" : "Add"}
             </Button>
           </Dialog.Footer>
         </Dialog.Content>
