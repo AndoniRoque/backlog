@@ -19,6 +19,7 @@ import {
   type PriorityOption,
   type StatusOption,
 } from "@/lib/gameOptions";
+import SearchInput, { SortBy, SortDir } from "./SearchInput";
 
 const PRIORITY_LABEL: Record<PriorityOption, string> = {
   MAYBE_SOMEDAY: "Maybe Someday",
@@ -78,6 +79,8 @@ export function GamesGrid({
   const [data, setData] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<SortBy>("title");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
 
   const [selectedStatuses, setSelectedStatuses] = useState<StatusOption[]>([]);
 
@@ -133,7 +136,7 @@ export function GamesGrid({
   }
 
   const filteredData = useMemo(() => {
-    return data.filter((g: Game) => {
+    const rows = data.filter((g: Game) => {
       const gamePriorities: PriorityOption[] = Array.isArray(g.priority)
         ? g.priority
         : g.priority
@@ -144,6 +147,7 @@ export function GamesGrid({
         selectedStatuses.length === 0
           ? true
           : selectedStatuses.includes(g.status);
+
       const priorityOk =
         selectedPriorities.length === 0
           ? true
@@ -153,7 +157,33 @@ export function GamesGrid({
 
       return priorityOk && statusOk;
     });
-  }, [data, selectedStatuses, selectedPriorities]);
+
+    const dir = sortDir === "asc" ? 1 : -1;
+
+    rows.sort((a, b) => {
+      if (sortBy === "title") {
+        return dir * (a.title ?? "").localeCompare(b.title ?? "");
+      }
+
+      if (sortBy === "releaseYear") {
+        const ay = typeof a.releaseYear === "number" ? a.releaseYear : null;
+        const by = typeof b.releaseYear === "number" ? b.releaseYear : null;
+        if (ay === null && by === null) return 0;
+        if (ay === null) return 1;
+        if (by === null) return -1;
+        return dir * (ay - by);
+      }
+
+      const ah = typeof a.estimatedHours === "number" ? a.estimatedHours : null;
+      const bh = typeof b.estimatedHours === "number" ? b.estimatedHours : null;
+      if (ah === null && bh === null) return 0;
+      if (ah === null) return 1;
+      if (bh === null) return -1;
+      return dir * (ah - bh);
+    });
+
+    return rows;
+  }, [data, selectedStatuses, selectedPriorities, sortBy, sortDir]);
 
   return (
     <Box>
@@ -207,11 +237,21 @@ export function GamesGrid({
           })}
         </HStack>
 
-        <Input
+        {/* <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Search by title…"
           w={"xs"}
+        /> */}
+        <SearchInput
+          title={title}
+          onTitleChange={setTitle}
+          sortBy={sortBy}
+          sortDir={sortDir}
+          onSortChange={({ sortBy, sortDir }) => {
+            setSortBy(sortBy);
+            setSortDir(sortDir);
+          }}
         />
       </HStack>
 
