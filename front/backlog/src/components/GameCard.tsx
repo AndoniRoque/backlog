@@ -1,6 +1,6 @@
 "use client";
 
-import type { Game } from "@/lib/types";
+import type { Game, GameStatus } from "@/lib/types";
 import { EditIcon, ViewIcon } from "@chakra-ui/icons";
 import {
   Badge,
@@ -17,13 +17,15 @@ import { useState } from "react";
 import GameViewDialog from "./GameViewDialog";
 import StoreIcon from "@/lib/storeIcons";
 import AddGameDialog from "./AddGameDialog";
-import { PriorityOption, StoreOption } from "@/lib/gameOptions";
+import { PriorityOption, StatusOption, StoreOption } from "@/lib/gameOptions";
 import { toaster } from "./ui/toaster";
 import { apiSend } from "@/lib/api";
+import { Tooltip } from "./ui/tooltip";
 
 type Props = Game & {
   handleAddToQueue: (igdbId: number) => void;
   onGamePatched?: (updated: Game) => void;
+  onGameDeleted?: (igdbId: number) => void;
 };
 
 export default function GameCard(props: Props) {
@@ -43,9 +45,12 @@ export default function GameCard(props: Props) {
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const [formStore, setFormStore] = useState<StoreOption>(store);
+  const [formStore, setFormStore] = useState<StoreOption>(store as StoreOption);
   const [formPriority, setFormPriority] = useState<PriorityOption>(
     (priority as PriorityOption) ?? "MAYBE_SOMEDAY",
+  );
+  const [formStatus, setFormStatus] = useState<StatusOption>(
+    status as StatusOption,
   );
   const [formHours, setFormHours] = useState<number | "">(estimatedHours ?? "");
 
@@ -53,6 +58,7 @@ export default function GameCard(props: Props) {
     // Poblar SIEMPRE desde props para evitar stale state
     setFormStore((store as StoreOption) ?? "Steam");
     setFormPriority((priority as PriorityOption) ?? "MAYBE_SOMEDAY");
+    setFormStatus((status as StatusOption) ?? "BACKLOG");
     setFormHours(estimatedHours ?? "");
     setEditOpen(true);
   }
@@ -74,6 +80,7 @@ export default function GameCard(props: Props) {
         store: formStore,
         priority: formPriority,
         estimatedHours: formHours === "" ? null : formHours,
+        status: formStatus,
       });
 
       props.onGamePatched?.({
@@ -81,6 +88,7 @@ export default function GameCard(props: Props) {
         store: formStore,
         priority: formPriority,
         estimatedHours: formHours === "" ? null : formHours,
+        status: formStatus as GameStatus,
       });
 
       toaster.create({ type: "success", description: `"${title}" updated!` });
@@ -108,10 +116,12 @@ export default function GameCard(props: Props) {
         <Stack gap={2} minW={0} flex={1}>
           <VStack justify={"space-between"} h={"full"}>
             <Box>
-              <Text fontWeight="bold" truncate lineClamp="2">
-                {title}
-                {typeof releaseYear === "number" ? ` (${releaseYear})` : ""}
-              </Text>
+              <Tooltip content={title}>
+                <Text fontWeight="bold" truncate lineClamp="2">
+                  {title}
+                  {typeof releaseYear === "number" ? ` (${releaseYear})` : ""}
+                </Text>
+              </Tooltip>
 
               <HStack wrap="wrap" gap={2}>
                 {priority ? (
@@ -187,17 +197,20 @@ export default function GameCard(props: Props) {
         onOpenChange={setOpen}
         game={props}
         onAddToQueue={handleAddToQueue}
+        onDeleted={props.onGameDeleted}
       />
 
       <AddGameDialog
         mode="edit"
         open={editOpen}
         onOpenChange={setEditOpen}
-        game={props} // le pasás el juego completo
+        game={props}
         store={formStore}
         onStoreChange={setFormStore}
         priority={formPriority}
         onPriorityChange={setFormPriority}
+        status={formStatus}
+        onStatusChange={setFormStatus}
         estimatedHours={formHours}
         onEstimatedHoursChange={setFormHours}
         onConfirm={confirmEdit}

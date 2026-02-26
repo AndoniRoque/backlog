@@ -128,6 +128,10 @@ export function GamesGrid({
     );
   }
 
+  function handleGameDeleted(igdbId: number) {
+    setData((prev) => prev.filter((g) => g.igdbId !== igdbId));
+  }
+
   const filteredData = useMemo(() => {
     return data.filter((g: Game) => {
       const gamePriorities: PriorityOption[] = Array.isArray(g.priority)
@@ -153,12 +157,18 @@ export function GamesGrid({
 
   return (
     <Box>
-      <HStack mb={4} justify={"space-between"} wrap="wrap" gap={2} w={"full"}>
+      <HStack
+        justify={"space-between"}
+        align={"center"}
+        wrap="wrap"
+        gap={2}
+        w={"full"}
+        py={2}
+      >
         <HStack
           gap={2}
           overflowX="auto"
           whiteSpace="nowrap"
-          pb={1}
           css={{ "&::-webkit-scrollbar": { display: "none" } }}
         >
           {FILTERS.map((f) => {
@@ -226,7 +236,8 @@ export function GamesGrid({
               key={g.igdbId ?? g.title}
               {...g}
               handleAddToQueue={handleAddToQueue}
-              onGamePatched={handleGamePatched} // ✅ AGREGAR
+              onGamePatched={handleGamePatched}
+              onGameDeleted={handleGameDeleted}
             />
           ))}
         </Grid>

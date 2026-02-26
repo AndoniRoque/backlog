@@ -1,11 +1,14 @@
 "use client";
 
+import { apiSend } from "@/lib/api";
 import StoreIcon from "@/lib/storeIcons";
 import type { Game } from "@/lib/types";
 import {
   Badge,
+  Button,
   Dialog,
   Flex,
+  Icon,
   Image,
   Separator,
   Stack,
@@ -45,10 +48,28 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   game: Game | null;
   onAddToQueue?: (igdbId: number) => void;
+  onDeleted?: (igdbId: number) => void;
 };
 
-export default function GameViewDialog({ open, onOpenChange, game }: Props) {
+export default function GameViewDialog({
+  open,
+  onOpenChange,
+  game,
+  onDeleted,
+}: Props) {
   const title = game?.title ?? "Game";
+
+  const handleDelete = async () => {
+    if (typeof game?.igdbId !== "number") return;
+
+    try {
+      await apiSend(`/games/${game.igdbId}`, "DELETE");
+      onOpenChange(false);
+      onDeleted?.(game.igdbId);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <Dialog.Root
@@ -121,6 +142,11 @@ export default function GameViewDialog({ open, onOpenChange, game }: Props) {
               </Stack>
             )}
           </Dialog.Body>
+          <Dialog.Footer>
+            <Button variant="subtle" onClick={handleDelete}>
+              Delete
+            </Button>
+          </Dialog.Footer>
         </Dialog.Content>
       </Dialog.Positioner>
     </Dialog.Root>

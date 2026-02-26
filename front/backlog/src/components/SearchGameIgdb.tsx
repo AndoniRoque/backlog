@@ -87,6 +87,7 @@ export default function SearchGameIgdb({
     setPriority("MAYBE_SOMEDAY");
     setEstimatedHours("");
     setOpen(true);
+    setQuery("");
   }
 
   function closeDialog() {

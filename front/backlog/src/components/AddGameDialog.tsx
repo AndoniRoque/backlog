@@ -1,6 +1,11 @@
 "use client";
 
-import { PRIORITY_OPTIONS, STORE_OPTIONS } from "@/lib/gameOptions";
+import {
+  PRIORITY_OPTIONS,
+  STATUS_OPTIONS,
+  StatusOption,
+  STORE_OPTIONS,
+} from "@/lib/gameOptions";
 import type { Game } from "@/lib/types";
 import { Button, Dialog, Field, Input, NativeSelect } from "@chakra-ui/react";
 
@@ -16,6 +21,8 @@ type Props = {
   onStoreChange: (v: StoreOption) => void;
   priority: PriorityOption;
   onPriorityChange: (v: PriorityOption) => void;
+  status?: StatusOption;
+  onStatusChange?: (s: StatusOption) => void;
   estimatedHours: number | "";
   onEstimatedHoursChange: (v: number | "") => void;
   onConfirm: () => void;
@@ -32,6 +39,8 @@ export default function AddGameDialog({
   onStoreChange,
   priority,
   onPriorityChange,
+  status,
+  onStatusChange,
   estimatedHours,
   onEstimatedHoursChange,
   onConfirm,
@@ -91,6 +100,27 @@ export default function AddGameDialog({
                 <NativeSelect.Indicator />
               </NativeSelect.Root>
             </Field.Root>
+
+            {mode === "edit" && (
+              <Field.Root mb={"4"}>
+                <Field.Label>Status</Field.Label>
+                <NativeSelect.Root>
+                  <NativeSelect.Field
+                    value={status}
+                    onChange={(e) =>
+                      onStatusChange?.(e.target.value as StatusOption)
+                    }
+                  >
+                    {STATUS_OPTIONS.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </NativeSelect.Field>
+                  <NativeSelect.Indicator />
+                </NativeSelect.Root>
+              </Field.Root>
+            )}
 
             <Field.Root>
               <Field.Label>Estimated hours (optional)</Field.Label>
