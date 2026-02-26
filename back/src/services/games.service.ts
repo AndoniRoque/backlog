@@ -1,6 +1,7 @@
 import { PriorityTag } from "@prisma/client";
 import { prisma } from "../prisma";
 import { searchGameInfo } from "./igdb.service";
+import { syncPlayingWithQueueHead } from "./queue.service";
 type Status = "BACKLOG" | "PLAYING" | "COMPLETED" | "DROPPED" | "PAUSED";
 
 export async function addFromIgdb(input: {
@@ -136,6 +137,28 @@ export async function updateGameDetails(
   return updated;
 }
 
-export async function deleteGame(id: number) {
-  await prisma.game.delete({ where: { igdbId: id } });
+export async function deleteGame(igdbId: number) {
+  return prisma.$transaction(async (tx) => {
+    const game = await tx.game.findUnique({
+      where: { igdbId },
+      select: { igdbId: true, status: true, queuePosition: true },
+    });
+
+    if (!game) throw new Error("Game not found");
+
+    if (game.queuePosition !== null) {
+      await tx.game.update({
+        where: { igdbId },
+        data: { queuePosition: null },
+      });
+    }
+
+    await tx.game.delete({
+      where: { igdbId },
+    });
+
+    await syncPlayingWithQueueHead(tx);
+
+    return true;
+  });
 }

@@ -111,7 +111,8 @@ export async function removeFromQueue(igdbId: number) {
     return updated;
   });
 }
-async function syncPlayingWithQueueHead(tx: any) {
+
+export async function syncPlayingWithQueueHead(tx: any) {
   const head = await tx.game.findFirst({
     where: { queuePosition: { not: null } },
     orderBy: { queuePosition: "asc" },
