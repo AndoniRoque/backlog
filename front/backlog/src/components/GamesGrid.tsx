@@ -238,6 +238,7 @@ export function GamesGrid({
               handleAddToQueue={handleAddToQueue}
               onGamePatched={handleGamePatched}
               onGameDeleted={handleGameDeleted}
+              onQueueChanged={onQueueChanged}
             />
           ))}
         </Grid>

@@ -1,6 +1,6 @@
 "use client";
 
-import { apiSend } from "@/lib/api";
+import { apiGet, apiSend } from "@/lib/api";
 import StoreIcon from "@/lib/storeIcons";
 import type { Game } from "@/lib/types";
 import {
@@ -8,7 +8,6 @@ import {
   Button,
   Dialog,
   Flex,
-  Icon,
   Image,
   Separator,
   Stack,
@@ -48,6 +47,7 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   game: Game | null;
   onAddToQueue?: (igdbId: number) => void;
+  onQueueChanged?: () => void;
   onDeleted?: (igdbId: number) => void;
 };
 
@@ -55,6 +55,7 @@ export default function GameViewDialog({
   open,
   onOpenChange,
   game,
+  onQueueChanged,
   onDeleted,
 }: Props) {
   const title = game?.title ?? "Game";
@@ -64,13 +65,15 @@ export default function GameViewDialog({
 
     try {
       await apiSend(`/games/${game.igdbId}`, "DELETE");
-      onOpenChange(false);
+
       onDeleted?.(game.igdbId);
+      onQueueChanged?.();
+      onOpenChange(false);
+      await Promise.all([apiGet("/state"), apiGet("/queue")]);
     } catch (error) {
       console.error(error);
     }
   };
-
   return (
     <Dialog.Root
       open={open}

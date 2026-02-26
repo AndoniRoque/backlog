@@ -26,6 +26,8 @@ type Props = Game & {
   handleAddToQueue: (igdbId: number) => void;
   onGamePatched?: (updated: Game) => void;
   onGameDeleted?: (igdbId: number) => void;
+  onQueueChanged?: () => void;
+  onGameDeletedLocal?: (igdbId: number) => void;
 };
 
 export default function GameCard(props: Props) {
@@ -197,6 +199,7 @@ export default function GameCard(props: Props) {
         onOpenChange={setOpen}
         game={props}
         onAddToQueue={handleAddToQueue}
+        onQueueChanged={props.onQueueChanged}
         onDeleted={props.onGameDeleted}
       />
 
