@@ -100,7 +100,8 @@ r.post("/", async (req, res) => {
 
 r.patch("/:igdbId", async (req, res) => {
   const { igdbId } = req.params;
-  const { title, summary, releaseYear, developers, store } = req.body;
+  const { title, summary, releaseYear, developers, store, estimatedHours } =
+    req.body;
 
   if (isNaN(parseInt(igdbId)))
     return res.status(400).json({ error: "Invalid game ID" });
@@ -112,6 +113,9 @@ r.patch("/:igdbId", async (req, res) => {
       releaseYear,
       developers,
       store,
+      estimatedHours,
+      status,
+      priority,
     });
 
     res.json(updated);
