@@ -112,6 +112,8 @@ export async function updateGameDetails(
     developers?: string[];
     store?: string;
     estimatedHours?: number;
+    status: Status;
+    priority: PriorityTag;
   },
 ) {
   const updateData: any = {};
@@ -123,6 +125,8 @@ export async function updateGameDetails(
   if (details.store) updateData.store = details.store;
   if (details.estimatedHours)
     updateData.estimatedHours = details.estimatedHours;
+  if (details.status) updateData.status = details.status;
+  if (details.priority) updateData.priority = details.priority;
 
   const updated = await prisma.game.update({
     where: { igdbId: id },

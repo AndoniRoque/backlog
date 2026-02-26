@@ -114,6 +114,8 @@ r.patch("/:igdbId", async (req, res) => {
       developers,
       store,
       estimatedHours,
+      status,
+      priority,
     });
 
     res.json(updated);
