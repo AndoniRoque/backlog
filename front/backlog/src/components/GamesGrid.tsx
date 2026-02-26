@@ -148,9 +148,7 @@ export function GamesGrid({
 
   return (
     <Box>
-      <HStack mb={4} justify={"flex-start"} wrap="wrap" gap={2}>
-        <Heading size="md">All Games</Heading>
-
+      <HStack mb={4} justify={"space-between"} wrap="wrap" gap={2} w={"full"}>
         <HStack
           gap={2}
           overflowX="auto"
@@ -186,6 +184,7 @@ export function GamesGrid({
                 lineHeight="1"
                 userSelect="none"
                 whiteSpace="nowrap"
+                _hover={{ bg: "gray" }}
               >
                 {f.label}
               </Badge>
@@ -197,7 +196,7 @@ export function GamesGrid({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Search by title…"
-          maxW="360px"
+          w={"xs"}
         />
       </HStack>
 
