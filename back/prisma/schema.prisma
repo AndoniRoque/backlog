@@ -19,6 +19,7 @@ enum PriorityTag {
   MAYBE_SOMEDAY
   FAVORITE
   MUST_PLAY
+  DONE
 }
 
 model Game {
