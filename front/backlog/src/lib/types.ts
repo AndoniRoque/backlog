@@ -6,7 +6,7 @@ export type GameStatus =
   | "DROPPED"
   | "PAUSED";
 
-export type PriorityTag = "MAYBE_SOMEDAY" | "FAVORITE" | "MUST_PLAY";
+export type PriorityTag = "MAYBE_SOMEDAY" | "FAVORITE" | "MUST_PLAY" | "DONE";
 
 export type Game = {
   igdbId: number | null;
@@ -49,6 +49,7 @@ export const PRIORITY_OPTIONS = [
   "FAVORITES",
   "MUST_PLAY",
   "MAYBE_SOMEDAY",
+  "DONE",
 ] as const;
 
 export const STATUS_OPTIONS = [
@@ -57,4 +58,4 @@ export const STATUS_OPTIONS = [
   "COMPLETED",
   "DROPPED",
   "PAUSED",
-]
+];
