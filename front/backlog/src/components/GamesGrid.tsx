@@ -51,7 +51,7 @@ const FILTERS: FilterItem[] = [
     value: p,
     label: PRIORITY_LABEL[p],
   })),
-  ...STATUS_OPTIONS.map((s) => ({
+  ...STATUS_OPTIONS.filter((s) => s !== "COMPLETED").map((s) => ({
     type: "status" as const,
     value: s,
     label: s,

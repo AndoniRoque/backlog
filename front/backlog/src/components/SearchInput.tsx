@@ -36,7 +36,7 @@ export default function SearchInput({
 }: Props) {
   const isDefault = sortBy === "title" && sortDir === "asc";
   return (
-    <HStack gap={0} w={200}>
+    <HStack gap={0} w={330}>
       <Input
         value={title}
         onChange={(e) => onTitleChange(e.target.value)}
