@@ -15,6 +15,7 @@ export const PRIORITY_OPTIONS = [
   "FAVORITE",
   "MUST_PLAY",
   "MAYBE_SOMEDAY",
+  "DONE",
 ] as const;
 
 export const STATUS_OPTIONS = [
