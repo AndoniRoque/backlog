@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  Badge,
-  Box,
-  Grid,
-  HStack,
-  Input,
-  Spinner,
-  Text,
-} from "@chakra-ui/react";
+import { Badge, Box, Grid, HStack, Spinner, Text } from "@chakra-ui/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { apiGet, apiSend } from "@/lib/api";
 import { Game } from "@/lib/types";
@@ -65,6 +57,14 @@ const FILTERS: FilterItem[] = [
     label: s,
   })),
 ];
+
+function getGamePriorities(g: Game): PriorityOption[] {
+  return Array.isArray(g.priority)
+    ? g.priority
+    : g.priority
+      ? [g.priority]
+      : [];
+}
 
 export function GamesGrid({
   selectedStore,
@@ -206,6 +206,59 @@ export function GamesGrid({
     return rows;
   }, [data, selectedStatuses, selectedPriorities, sortBy, sortDir]);
 
+  const counts = useMemo(() => {
+    // base = data ya viene filtrada por store + title en tu useEffect
+    const rows = data;
+
+    const statusCounts: Record<string, number> = {};
+    const priorityCounts: Record<string, number> = {};
+
+    // Pre-inicializar para que siempre exista el key
+    STATUS_OPTIONS.forEach((s) => (statusCounts[s] = 0));
+    PRIORITY_OPTIONS.forEach((p) => (priorityCounts[p] = 0));
+
+    // Para cada juego, contamos:
+    // - status: si pasa el filtro de prioridades actual (y status sería el "candidate")
+    // - priority: si pasa el filtro de status actual (y priority sería el "candidate")
+    for (const g of rows) {
+      const gamePriorities = getGamePriorities(g);
+
+      // ¿Pasa el filtro de prioridades actual?
+      const passesCurrentPriorities =
+        selectedPriorities.length === 0
+          ? true
+          : gamePriorities.length === 0
+            ? true
+            : gamePriorities.some((p) => selectedPriorities.includes(p));
+
+      // ¿Pasa el filtro de status actual?
+      const passesCurrentStatuses =
+        selectedStatuses.length === 0
+          ? true
+          : selectedStatuses.includes(g.status);
+
+      // Contar status (respetando prioridades actuales)
+      if (passesCurrentPriorities) {
+        if (g.status && statusCounts[g.status] !== undefined) {
+          statusCounts[g.status] += 1;
+        }
+      }
+
+      // Contar prioridades (respetando statuses actuales)
+      if (passesCurrentStatuses) {
+        // Si querés que "sin priority" cuente para todos como hoy tu filtro,
+        // NO hay una categoría. Acá contamos solo cuando el juego tiene esa priority.
+        for (const p of gamePriorities) {
+          if (priorityCounts[p] !== undefined) {
+            priorityCounts[p] += 1;
+          }
+        }
+      }
+    }
+
+    return { statusCounts, priorityCounts };
+  }, [data, selectedPriorities, selectedStatuses]);
+
   useEffect(() => {
     setVisibleCount(20);
   }, [filteredData]);
@@ -216,12 +269,10 @@ export function GamesGrid({
         justify={"space-between"}
         align={"center"}
         wrap="wrap"
-        gap={2}
         w={"full"}
         py={2}
       >
         <HStack
-          gap={2}
           overflowX="auto"
           whiteSpace="nowrap"
           css={{ "&::-webkit-scrollbar": { display: "none" } }}
@@ -232,8 +283,14 @@ export function GamesGrid({
                 ? selectedPriorities.includes(f.value)
                 : selectedStatuses.includes(f.value);
 
+            const total =
+              f.type === "priority"
+                ? (counts.priorityCounts[f.value] ?? 0)
+                : (counts.statusCounts[f.value] ?? 0);
+
             return (
               <Badge
+                gap={0}
                 key={`${f.type}:${f.value}`}
                 as="button"
                 cursor="pointer"
@@ -246,17 +303,17 @@ export function GamesGrid({
                 }}
                 rounded="full"
                 px={3}
-                py={1.5}
-                alignItems="center"
-                justifyContent="center"
-                textAlign="center"
+                py={2}
                 fontSize="sm"
                 lineHeight="1"
                 userSelect="none"
                 whiteSpace="nowrap"
                 _hover={{ bg: "gray" }}
               >
-                {f.label}
+                {f.label}{" "}
+                <Box as="span" opacity={0.85} ml={2}>
+                  {total}
+                </Box>
               </Badge>
             );
           })}
