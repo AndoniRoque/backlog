@@ -17,6 +17,7 @@ const PRIORITY_LABEL: Record<PriorityOption, string> = {
   MAYBE_SOMEDAY: "Maybe Someday",
   MUST_PLAY: "Must Play",
   FAVORITE: "Favorite",
+  DONE: "Done",
 };
 
 function buildGamesQuery(params: {
@@ -46,7 +47,7 @@ type FilterItem =
   | { type: "status"; value: StatusOption; label: string };
 
 const FILTERS: FilterItem[] = [
-  ...PRIORITY_OPTIONS.map((p) => ({
+  ...PRIORITY_OPTIONS.filter((p) => p !== "DONE").map((p) => ({
     type: "priority" as const,
     value: p,
     label: PRIORITY_LABEL[p],
