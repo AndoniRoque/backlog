@@ -102,7 +102,9 @@ export async function removeFromQueue(igdbId: number) {
       where: { igdbId },
       data: {
         queuePosition: null,
-        ...(isHead ? { status: "COMPLETED" as const } : {}),
+        ...(isHead
+          ? { status: "COMPLETED" as const, priority: "DONE" as const }
+          : {}),
       },
       select: { igdbId: true, title: true, queuePosition: true },
     });
