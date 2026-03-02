@@ -52,11 +52,13 @@ const FILTERS: FilterItem[] = [
     value: p,
     label: PRIORITY_LABEL[p],
   })),
-  ...STATUS_OPTIONS.filter((s) => s !== "COMPLETED").map((s) => ({
-    type: "status" as const,
-    value: s,
-    label: s,
-  })),
+  ...STATUS_OPTIONS.filter((s) => s !== "DROPPED")
+    .filter((s) => s !== "PLAYING")
+    .map((s) => ({
+      type: "status" as const,
+      value: s,
+      label: s,
+    })),
 ];
 
 function getGamePriorities(g: Game): PriorityOption[] {
