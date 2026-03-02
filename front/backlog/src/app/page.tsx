@@ -21,6 +21,7 @@ import {
 } from "@chakra-ui/react";
 import { useMemo, useState } from "react";
 import { STORE_OPTIONS } from "@/lib/gameOptions";
+import RandomGame from "@/components/RandomGame";
 
 export default function Home() {
   const [selectedStore, setSelectedStore] = useState<string | null>(null);
@@ -140,6 +141,8 @@ export default function Home() {
               selectedStore={selectedStore}
               onSelectStore={setSelectedStore}
             />
+
+            <RandomGame />
           </GridItem>
 
           {/* Games */}
