@@ -4,8 +4,18 @@ import { STORE_OPTIONS } from "@/lib/gameOptions";
 import StoreIcon from "@/lib/storeIcons";
 import { apiGet } from "@/lib/api";
 import { Game } from "@/lib/types";
-import { Box, Button, Heading, Stack, Text } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Heading,
+  Portal,
+  Stack,
+  Text,
+  Tooltip,
+} from "@chakra-ui/react";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { LuChartBar } from "react-icons/lu";
 
 export function SidebarStores({
   selectedStore,
@@ -16,6 +26,7 @@ export function SidebarStores({
   onSelectStore: (store: string | null) => void;
   refreshSignal?: number;
 }) {
+  const router = useRouter();
   const [games, setGames] = useState<Game[]>([]);
 
   useEffect(() => {
@@ -38,9 +49,35 @@ export function SidebarStores({
 
   return (
     <Box p={4} borderWidth="1px" borderRadius="lg">
-      <Heading size="sm" mb={3}>
-        Stores
-      </Heading>
+      <Box
+        mb={3}
+        display="flex"
+        alignItems="center"
+        justifyContent="space-between"
+        gap={2}
+      >
+        <Heading size="sm">Stores</Heading>
+        <Tooltip.Root>
+          <Tooltip.Trigger asChild>
+            <Button
+              size="xs"
+              variant="ghost"
+              aria-label="Open statistics"
+              title="Statistics"
+              onClick={() => router.push("/stats")}
+            >
+              <LuChartBar />
+            </Button>
+          </Tooltip.Trigger>
+          <Portal>
+            <Tooltip.Positioner>
+              <Tooltip.Content>
+                View statistics about your backlog
+              </Tooltip.Content>
+            </Tooltip.Positioner>
+          </Portal>
+        </Tooltip.Root>
+      </Box>
 
       <Stack gap={2}>
         <Button
