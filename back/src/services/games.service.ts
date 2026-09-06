@@ -90,7 +90,10 @@ export async function getGameById(id: number) {
 export async function updateGamePriority(id: number, priority: PriorityTag) {
   return prisma.game.update({
     where: { igdbId: id },
-    data: { priority },
+    data: {
+      priority,
+      ...(priority === "DONE" ? { completedAt: new Date() } : {}),
+    },
   });
 }
 
@@ -100,7 +103,10 @@ export async function updateGameStatus(
 ) {
   return prisma.game.update({
     where: { igdbId: id },
-    data: { status },
+    data: {
+      status,
+      completedAt: status === "COMPLETED" ? new Date() : null,
+    },
   });
 }
 
@@ -126,8 +132,23 @@ export async function updateGameDetails(
   if (details.store) updateData.store = details.store;
   if (details.estimatedHours)
     updateData.estimatedHours = details.estimatedHours;
-  if (details.status) updateData.status = details.status;
+  if (details.status) {
+    updateData.status = details.status;
+  }
   if (details.priority) updateData.priority = details.priority;
+
+  if (details.status || details.priority) {
+    const current = await prisma.game.findUnique({
+      where: { igdbId: id },
+      select: { completedAt: true },
+    });
+    const isCompleted =
+      details.status === "COMPLETED" || details.priority === "DONE";
+
+    updateData.completedAt = isCompleted
+      ? current?.completedAt ?? new Date()
+      : null;
+  }
 
   const updated = await prisma.game.update({
     where: { igdbId: id },

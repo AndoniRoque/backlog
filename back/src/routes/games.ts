@@ -71,7 +71,7 @@ r.post("/", async (req, res) => {
 
   if (
     !priority ||
-    !["MAYBE_SOMEDAY", "FAVORITE", "MUST_PLAY"].includes(priority)
+    !["MAYBE_SOMEDAY", "FAVORITE", "MUST_PLAY", "DONE"].includes(priority)
   )
     return res.status(400).json({ error: "Invalid priority value" });
 

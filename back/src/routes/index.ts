@@ -4,6 +4,7 @@ import gamesRouter from "./games";
 import stateRouter from "./state";
 import igdbRouter from "./igdb";
 import recommendRouter from "./recommend"
+import statsRouter from "./stats";
 
 const router = Router();
 
@@ -12,6 +13,7 @@ router.use("/state", stateRouter);
 router.use("/igdb", igdbRouter);
 router.use("/queue", queueRouter);
 router.use("/recommend", recommendRouter)
+router.use("/stats", statsRouter);
 
 export default router;
 

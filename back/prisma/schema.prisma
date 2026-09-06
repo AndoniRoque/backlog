@@ -23,9 +23,10 @@ enum PriorityTag {
 }
 
 model Game {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String    @id @default(cuid())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
 
   // Tu data "manual" mínima (por si IGDB falla o querés customizar)
   title          String
