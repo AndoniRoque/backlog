@@ -11,7 +11,8 @@ import {
 } from "@chakra-ui/react";
 import { useEffect, useMemo, useState } from "react";
 import { apiGet, apiSend } from "@/lib/api";
-import type { QueueItem, StateResponse } from "@/lib/types";
+import type { Game, QueueItem, StateResponse } from "@/lib/types";
+import GameViewDialog from "./GameViewDialog";
 
 import {
   DndContext,
@@ -34,10 +35,12 @@ function SortableQueueRow({
   item,
   isFirst,
   onRemove,
+  onOpen,
 }: {
   item: QueueItem;
   isFirst: boolean;
   onRemove: (igdbId: number, isFirst: boolean) => void;
+  onOpen: (igdbId: number) => void;
 }) {
   const id = String(item.igdbId);
 
@@ -67,6 +70,7 @@ function SortableQueueRow({
       cursor={isDragging ? "grabbing" : "grab"}
       userSelect="none"
       _hover={{ bg: "blackAlpha.50" }}
+      onClick={() => onOpen(item.igdbId)}
       {...attributes}
       {...listeners}
     >
@@ -81,9 +85,12 @@ function SortableQueueRow({
           aria-label={isFirst ? "Complete & remove" : "Remove"}
           variant="ghost"
           size="sm"
-          onClick={() => onRemove(item.igdbId!, isFirst)}
           onPointerDown={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove(item.igdbId!, isFirst);
+          }}
         >
           ×
         </IconButton>
@@ -98,9 +105,8 @@ export function QueuePanel({
   refreshSignal: number;
   onQueueChanged?: () => void;
 }) {
-  const [nowPlaying, setNowPlaying] =
-    useState<StateResponse["nowPlaying"]>(null);
   const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
@@ -108,11 +114,10 @@ export function QueuePanel({
     setLoading(true);
     setErr(null);
     try {
-      const [state, q] = await Promise.all([
+      const [, q] = await Promise.all([
         apiGet<StateResponse>("/state"),
         apiGet<QueueItem[]>("/queue"),
       ]);
-      setNowPlaying(state.nowPlaying ?? null);
       setQueue(q);
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : "Failed to load queue");
@@ -131,6 +136,15 @@ export function QueuePanel({
     await load();
 
     onQueueChanged?.();
+  }
+
+  async function openGame(igdbId: number) {
+    try {
+      const game = await apiGet<Game>(`/games/${igdbId}`);
+      setSelectedGame(game);
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : "Failed to load game");
+    }
   }
 
   // sensores (mouse/touch + teclado)
@@ -206,6 +220,7 @@ export function QueuePanel({
                     item={item}
                     isFirst={index === 0}
                     onRemove={removeOrComplete}
+                    onOpen={openGame}
                   />
                 ))}
               </Stack>
@@ -215,6 +230,18 @@ export function QueuePanel({
           <Text opacity={0.8}>Queue is empty.</Text>
         )}
       </Box>
+
+      <GameViewDialog
+        open={selectedGame !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedGame(null);
+        }}
+        game={selectedGame}
+        onQueueChanged={() => {
+          load();
+          onQueueChanged?.();
+        }}
+      />
     </Stack>
   );
 }

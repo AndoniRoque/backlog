@@ -315,7 +315,7 @@ export function GamesGrid({
               >
                 {f.label}{" "}
                 <Box as="span" opacity={0.85} ml={2}>
-                  {total}
+                  ({total})
                 </Box>
               </Badge>
             );

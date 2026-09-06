@@ -140,6 +140,7 @@ export default function Home() {
             <SidebarStores
               selectedStore={selectedStore}
               onSelectStore={setSelectedStore}
+              refreshSignal={gamesRefreshSignal}
             />
 
             <RandomGame />
