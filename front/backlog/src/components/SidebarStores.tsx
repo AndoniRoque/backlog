@@ -48,7 +48,8 @@ export function SidebarStores({
           onClick={() => onSelectStore(null)}
           justifyContent="space-between"
         >
-          <Text>All ({games.length})</Text>
+          <Text>All </Text>
+          <Text>({games.length})</Text>
         </Button>
 
         {STORE_OPTIONS.map((s) => (
