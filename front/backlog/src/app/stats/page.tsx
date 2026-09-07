@@ -2,6 +2,7 @@
 
 import Squares from "@/components/reactBits/Squares";
 import { apiGet } from "@/lib/api";
+import { PRIORITY_OPTIONS, STORE_OPTIONS } from "@/lib/gameOptions";
 import {
   Badge,
   Box,
@@ -10,6 +11,7 @@ import {
   Grid,
   Heading,
   HStack,
+  NativeSelect,
   Spinner,
   Stack,
   Text,
@@ -47,6 +49,7 @@ type Statistics = {
     count: number;
     hours: number;
   }[];
+  monthlyDropped: { month: number; name: string; count: number }[];
   completionTimeline: {
     date: string;
     igdbId: number | null;
@@ -58,6 +61,7 @@ type Statistics = {
   byStore: { store: string; count: number }[];
   byStatus: { status: string; count: number }[];
   hours: { completedEstimated: number; droppedExcluded: boolean };
+  filters: { store?: string; priority?: string };
 };
 
 function StatCard({
@@ -90,13 +94,19 @@ export default function StatisticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
+  const [storeFilter, setStoreFilter] = useState("");
+  const [priorityFilter, setPriorityFilter] = useState("");
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
 
-    apiGet<Statistics>(`/stats?year=${year}`)
+    const params = new URLSearchParams({ year: String(year) });
+    if (storeFilter) params.set("store", storeFilter);
+    if (priorityFilter) params.set("priority", priorityFilter);
+
+    apiGet<Statistics>(`/stats?${params.toString()}`)
       .then((data) => {
         if (!cancelled) setStats(data);
       })
@@ -117,7 +127,7 @@ export default function StatisticsPage() {
     return () => {
       cancelled = true;
     };
-  }, [year]);
+  }, [priorityFilter, storeFilter, year]);
 
   const selectedTimeline = useMemo(
     () =>
@@ -133,6 +143,15 @@ export default function StatisticsPage() {
     () =>
       Math.max(
         ...(stats?.monthlyCompleted.map((month) => month.count) ?? [0]),
+        1,
+      ),
+    [stats],
+  );
+
+  const maxDroppedCount = useMemo(
+    () =>
+      Math.max(
+        ...(stats?.monthlyDropped.map((month) => month.count) ?? [0]),
         1,
       ),
     [stats],
@@ -169,7 +188,41 @@ export default function StatisticsPage() {
             </Text>
             <Heading size={{ base: "lg", md: "xl" }}>Statistics</Heading>
           </Box>
-          <HStack>
+          <HStack wrap="wrap" justify="end">
+            <NativeSelect.Root size="sm" w="150px">
+              <NativeSelect.Field
+                value={storeFilter}
+                onChange={(event) => {
+                  setSelectedMonth(null);
+                  setStoreFilter(event.target.value);
+                }}
+              >
+                <option value="">All stores</option>
+                {STORE_OPTIONS.map((store) => (
+                  <option key={store} value={store}>
+                    {store}
+                  </option>
+                ))}
+              </NativeSelect.Field>
+              <NativeSelect.Indicator />
+            </NativeSelect.Root>
+            <NativeSelect.Root size="sm" w="160px">
+              <NativeSelect.Field
+                value={priorityFilter}
+                onChange={(event) => {
+                  setSelectedMonth(null);
+                  setPriorityFilter(event.target.value);
+                }}
+              >
+                <option value="">All priorities</option>
+                {PRIORITY_OPTIONS.map((priority) => (
+                  <option key={priority} value={priority}>
+                    {priority.replaceAll("_", " ")}
+                  </option>
+                ))}
+              </NativeSelect.Field>
+              <NativeSelect.Indicator />
+            </NativeSelect.Root>
             <Button
               variant="outline"
               size="sm"
@@ -258,6 +311,16 @@ export default function StatisticsPage() {
                       : "All statuses"}
                   </Badge>
                 </Flex>
+                <HStack gap={4} mb={3} fontSize="xs" opacity={0.75}>
+                  <HStack gap={1}>
+                    <Box w="8px" h="8px" borderRadius="sm" bg="teal.300" />
+                    <Text>Completed</Text>
+                  </HStack>
+                  <HStack gap={1}>
+                    <Box w="8px" h="8px" borderRadius="sm" bg="red.300" />
+                    <Text>Dropped</Text>
+                  </HStack>
+                </HStack>
                 <Flex h="190px" align="end" gap={{ base: 1, md: 3 }}>
                   {stats.monthlyCompleted.map((month, index) => {
                     const height = `${Math.max((month.count / maxMonthlyCount) * 100, month.count ? 8 : 2)}%`;
@@ -305,6 +368,15 @@ export default function StatisticsPage() {
                                 : "whiteAlpha.300"
                           }
                           title={`${month.name}: ${month.count} games`}
+                        />
+                        <Box
+                          w="full"
+                          maxW="34px"
+                          h={`${Math.max((stats.monthlyDropped[index].count / maxDroppedCount) * 100, stats.monthlyDropped[index].count ? 8 : 2)}%`}
+                          minH="3px"
+                          borderRadius="sm"
+                          bg="red.300"
+                          title={`${month.name}: ${stats.monthlyDropped[index].count} dropped`}
                         />
                         <Text fontSize="xs" opacity={0.65}>
                           {MONTHS[index]}
