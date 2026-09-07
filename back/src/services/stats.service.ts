@@ -22,6 +22,7 @@ export async function getStatistics(year: number) {
 
   const completedThisYear = games.filter(
     (game) =>
+      game.status !== "DROPPED" &&
       (game.status === "COMPLETED" || game.priority === "DONE") &&
       game.completedAt !== null &&
       game.completedAt.getUTCFullYear() === year,
@@ -29,7 +30,9 @@ export async function getStatistics(year: number) {
 
   const closedThisYear = games.filter(
     (game) =>
-      (game.status === "COMPLETED" || game.status === "DROPPED") &&
+      (game.status === "DROPPED" ||
+        game.status === "COMPLETED" ||
+        game.priority === "DONE") &&
       game.completedAt !== null &&
       game.completedAt.getUTCFullYear() === year,
   );
@@ -94,7 +97,7 @@ export async function getStatistics(year: number) {
       title: game.title,
       store: game.store,
       estimatedHours: game.estimatedHours,
-      status: game.status,
+      status: game.status === "DROPPED" ? "DROPPED" : "COMPLETED",
     })),
     byStore,
     byStatus,
