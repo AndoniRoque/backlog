@@ -132,6 +132,14 @@ export default function GameViewDialog({
                     label="Estimated hours"
                     value={`${game.estimatedHours ?? 0} hs.`}
                   />
+                  <InfoRow
+                    label="Completed"
+                    value={
+                      game.completedAt
+                        ? new Date(game.completedAt).toLocaleDateString()
+                        : null
+                    }
+                  />
                 </Stack>
 
                 <Flex gap={4} direction={{ base: "column", md: "row" }}>
@@ -142,6 +150,17 @@ export default function GameViewDialog({
                     </Text>
                   </Stack>
                 </Flex>
+
+                <Stack gap={2}>
+                  <Text fontWeight="semibold">Personal note</Text>
+                  <Text
+                    fontSize="sm"
+                    opacity={game.personalNote ? 0.9 : 0.6}
+                    whiteSpace="pre-wrap"
+                  >
+                    {game.personalNote || "No personal note yet."}
+                  </Text>
+                </Stack>
               </Stack>
             )}
           </Dialog.Body>

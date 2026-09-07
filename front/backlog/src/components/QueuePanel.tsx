@@ -13,6 +13,7 @@ import { useEffect, useMemo, useState } from "react";
 import { apiGet, apiSend } from "@/lib/api";
 import type { Game, QueueItem, StateResponse } from "@/lib/types";
 import GameViewDialog from "./GameViewDialog";
+import CompleteGameDialog from "./CompleteGameDialog";
 
 import {
   DndContext,
@@ -107,6 +108,7 @@ export function QueuePanel({
 }) {
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
+  const [completingGame, setCompletingGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
@@ -131,6 +133,18 @@ export function QueuePanel({
   }, [refreshSignal]);
 
   async function removeOrComplete(igdbId: number) {
+    const isHead = queue[0]?.igdbId === igdbId;
+
+    if (isHead) {
+      try {
+        const game = await apiGet<Game>(`/games/${igdbId}`);
+        setCompletingGame(game);
+      } catch (e: unknown) {
+        setErr(e instanceof Error ? e.message : "Failed to load game");
+      }
+      return;
+    }
+
     await apiSend(`/queue/${igdbId}`, "DELETE");
 
     await load();
@@ -239,6 +253,19 @@ export function QueuePanel({
         game={selectedGame}
         onQueueChanged={() => {
           load();
+          onQueueChanged?.();
+        }}
+      />
+
+      <CompleteGameDialog
+        open={completingGame !== null}
+        game={completingGame}
+        onOpenChange={(open) => {
+          if (!open) setCompletingGame(null);
+        }}
+        onCompleted={async () => {
+          setCompletingGame(null);
+          await load();
           onQueueChanged?.();
         }}
       />

@@ -16,6 +16,8 @@ export type Game = {
   store: string | null;
   releaseYear: number | null;
   estimatedHours: number | null;
+  personalNote: string | null;
+  completedAt: string | null;
   coverUrl: string | null;
   heroUrl: string | null;
   queuePosition: number | null;
