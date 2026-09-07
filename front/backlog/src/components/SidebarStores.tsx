@@ -43,9 +43,13 @@ export function SidebarStores({
     };
   }, [refreshSignal]);
 
+  const backlogGames = games.filter(
+    (game) =>
+      game.priority === "MUST_PLAY" || game.priority === "MAYBE_SOMEDAY",
+  );
   const countForStore = (store: string) =>
-    games.filter((game) => game.store === store).length;
-  const gamesWithoutStore = games.filter((game) => !game.store).length;
+    backlogGames.filter((game) => game.store === store).length;
+  const gamesWithoutStore = backlogGames.filter((game) => !game.store).length;
 
   return (
     <Box p={4} borderWidth="1px" borderRadius="lg">
@@ -86,7 +90,7 @@ export function SidebarStores({
           justifyContent="space-between"
         >
           <Text>All </Text>
-          <Text>({games.length})</Text>
+          <Text>({backlogGames.length})</Text>
         </Button>
 
         {STORE_OPTIONS.map((s) => (
