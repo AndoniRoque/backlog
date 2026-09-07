@@ -2,9 +2,10 @@
 
 import { apiGet, apiSend } from "@/lib/api";
 import StoreIcon from "@/lib/storeIcons";
-import type { Game } from "@/lib/types";
+import type { Game, GameActivity } from "@/lib/types";
 import {
   Badge,
+  Box,
   Button,
   Dialog,
   Flex,
@@ -13,6 +14,7 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
+import { useEffect, useState } from "react";
 
 function InfoRow({
   label,
@@ -59,13 +61,36 @@ export default function GameViewDialog({
   onDeleted,
 }: Props) {
   const title = game?.title ?? "Game";
+  const [activity, setActivity] = useState<GameActivity[]>([]);
+  const [activityLoading, setActivityLoading] = useState(false);
+
+  useEffect(() => {
+    if (!open || typeof game?.igdbId !== "number") {
+      setActivity([]);
+      return;
+    }
+
+    let cancelled = false;
+    setActivityLoading(true);
+    apiGet<GameActivity[]>(`/games/${game.igdbId}/activity`)
+      .then((items) => {
+        if (!cancelled) setActivity(items);
+      })
+      .catch((error) => console.error(error))
+      .finally(() => {
+        if (!cancelled) setActivityLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [game?.igdbId, open]);
 
   const handleDelete = async () => {
     if (typeof game?.igdbId !== "number") return;
 
     try {
       await apiSend(`/games/${game.igdbId}`, "DELETE");
-
       onDeleted?.(game.igdbId);
       onQueueChanged?.();
       onOpenChange(false);
@@ -74,24 +99,25 @@ export default function GameViewDialog({
       console.error(error);
     }
   };
+
   return (
     <Dialog.Root
       open={open}
-      onOpenChange={(d) => onOpenChange(d.open)}
+      onOpenChange={(details) => onOpenChange(details.open)}
       size="xl"
     >
       <Dialog.Backdrop />
       <Dialog.Positioner>
         <Dialog.Content>
           <Dialog.CloseTrigger />
-          <Dialog.Header justifyContent={"space-between"}>
+          <Dialog.Header justifyContent="space-between">
             <Dialog.Title>
               {title}{" "}
               {typeof game?.releaseYear === "number"
                 ? `(${game.releaseYear})`
                 : ""}
             </Dialog.Title>
-            <Dialog.Description justifyContent={"end"} gap={2} mt={1}>
+            <Dialog.Description justifyContent="end" gap={2} mt={1}>
               <Badge>{game?.priority.replace("_", " ") ?? "—"}</Badge>
               <Badge>{game?.igdbId}</Badge>
             </Dialog.Description>
@@ -120,14 +146,12 @@ export default function GameViewDialog({
                     gap={2}
                     align="center"
                     wrap="wrap"
-                    justify={"space-between"}
+                    justify="space-between"
                   >
                     <Text fontWeight="semibold">Details</Text>
-                    <Flex gap={2}>
-                      <StoreIcon />
-                    </Flex>
+                    <StoreIcon name={game.store} />
                   </Flex>
-                  <InfoRow label="Developers" value={game?.developers} />
+                  <InfoRow label="Developers" value={game.developers} />
                   <InfoRow
                     label="Estimated hours"
                     value={`${game.estimatedHours ?? 0} hs.`}
@@ -142,14 +166,12 @@ export default function GameViewDialog({
                   />
                 </Stack>
 
-                <Flex gap={4} direction={{ base: "column", md: "row" }}>
-                  <Stack gap={2} flex={1}>
-                    <Text fontWeight="semibold">Summary</Text>
-                    <Text fontSize="sm" opacity={0.9}>
-                      {game.summary ?? "—"}
-                    </Text>
-                  </Stack>
-                </Flex>
+                <Stack gap={2}>
+                  <Text fontWeight="semibold">Summary</Text>
+                  <Text fontSize="sm" opacity={0.9}>
+                    {game.summary ?? "—"}
+                  </Text>
+                </Stack>
 
                 <Stack gap={2}>
                   <Text fontWeight="semibold">Personal note</Text>
@@ -160,6 +182,37 @@ export default function GameViewDialog({
                   >
                     {game.personalNote || "No personal note yet."}
                   </Text>
+                </Stack>
+
+                <Stack gap={3}>
+                  <Text fontWeight="semibold">Activity history</Text>
+                  {activityLoading ? (
+                    <Text fontSize="sm" opacity={0.6}>
+                      Loading history...
+                    </Text>
+                  ) : activity.length ? (
+                    activity.map((event) => (
+                      <Box key={event.id} pl={3} borderLeftWidth="2px">
+                        <Flex justify="space-between" gap={3}>
+                          <Text fontSize="sm" fontWeight="medium">
+                            {event.type.replaceAll("_", " ")}
+                          </Text>
+                          <Text fontSize="xs" opacity={0.6} flexShrink={0}>
+                            {new Date(event.createdAt).toLocaleString()}
+                          </Text>
+                        </Flex>
+                        {event.detail && (
+                          <Text fontSize="sm" opacity={0.7} mt={1}>
+                            {event.detail}
+                          </Text>
+                        )}
+                      </Box>
+                    ))
+                  ) : (
+                    <Text fontSize="sm" opacity={0.6}>
+                      No activity recorded yet.
+                    </Text>
+                  )}
                 </Stack>
               </Stack>
             )}

@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  Badge,
-  Box,
-  Button,
-  Grid,
-  HStack,
-  Spinner,
-  Text,
-} from "@chakra-ui/react";
+import { Badge, Box, Grid, HStack, Spinner, Text } from "@chakra-ui/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { apiGet, apiSend } from "@/lib/api";
 import { Game } from "@/lib/types";
@@ -388,26 +380,6 @@ export function GamesGrid({
           hoursFilter={hoursFilter}
           onHoursFilterChange={setHoursFilter}
         />
-      </HStack>
-
-      <HStack gap={2} mb={3} wrap="wrap">
-        {(selectedStatuses.length > 0 ||
-          selectedPriorities.length > 0 ||
-          hoursFilter !== "all" ||
-          title) && (
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => {
-              setSelectedStatuses([]);
-              setSelectedPriorities([]);
-              setHoursFilter("all");
-              setTitle("");
-            }}
-          >
-            Clear filters
-          </Button>
-        )}
       </HStack>
 
       {loading && (

@@ -25,6 +25,13 @@ export type Game = {
   developers?: string[] | null;
 };
 
+export type GameActivity = {
+  id: string;
+  createdAt: string;
+  type: string;
+  detail: string | null;
+};
+
 export type QueueItem = {
   igdbId: number;
   title: string;
