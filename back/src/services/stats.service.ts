@@ -15,12 +15,21 @@ const MONTH_NAMES = [
   "December",
 ];
 
-export async function getStatistics(year: number) {
+export async function getStatistics(
+  year: number,
+  filters: { store?: string; priority?: string } = {},
+) {
   const games = await prisma.game.findMany({
     orderBy: [{ completedAt: "asc" }, { title: "asc" }],
   });
 
-  const completedThisYear = games.filter(
+  const filteredGames = games.filter(
+    (game) =>
+      (!filters.store || (game.store?.trim() || "No store") === filters.store) &&
+      (!filters.priority || game.priority === filters.priority),
+  );
+
+  const completedThisYear = filteredGames.filter(
     (game) =>
       game.status !== "DROPPED" &&
       (game.status === "COMPLETED" || game.priority === "DONE") &&
@@ -28,7 +37,7 @@ export async function getStatistics(year: number) {
       game.completedAt.getUTCFullYear() === year,
   );
 
-  const closedThisYear = games.filter(
+  const closedThisYear = filteredGames.filter(
     (game) =>
       (game.status === "DROPPED" ||
         game.status === "COMPLETED" ||
@@ -53,6 +62,15 @@ export async function getStatistics(year: number) {
     };
   });
 
+  const monthlyDropped = MONTH_NAMES.map((name, index) => ({
+    month: index + 1,
+    name,
+    count: closedThisYear.filter(
+      (game) =>
+        game.status === "DROPPED" && game.completedAt!.getUTCMonth() === index,
+    ).length,
+  }));
+
   const byStore = Object.entries(
     completedThisYear.reduce<Record<string, number>>((counts, game) => {
       const store = game.store?.trim() || "No store";
@@ -64,7 +82,7 @@ export async function getStatistics(year: number) {
     .sort((a, b) => b.count - a.count || a.store.localeCompare(b.store));
 
   const byStatus = Object.entries(
-    games.reduce<Record<string, number>>((counts, game) => {
+    filteredGames.reduce<Record<string, number>>((counts, game) => {
       counts[game.status] = (counts[game.status] ?? 0) + 1;
       return counts;
     }, {}),
@@ -86,11 +104,12 @@ export async function getStatistics(year: number) {
         completedThisYear.length > 0
           ? Number((totalHours / completedThisYear.length).toFixed(1))
           : 0,
-      backlogGames: games.filter((game) => game.status === "BACKLOG").length,
-      playingGames: games.filter((game) => game.status === "PLAYING").length,
-      droppedGames: games.filter((game) => game.status === "DROPPED").length,
+      backlogGames: filteredGames.filter((game) => game.status === "BACKLOG").length,
+      playingGames: filteredGames.filter((game) => game.status === "PLAYING").length,
+      droppedGames: filteredGames.filter((game) => game.status === "DROPPED").length,
     },
     monthlyCompleted,
+    monthlyDropped,
     completionTimeline: closedThisYear.map((game) => ({
       date: game.completedAt!.toISOString(),
       igdbId: game.igdbId,
@@ -105,5 +124,6 @@ export async function getStatistics(year: number) {
       completedEstimated: totalHours,
       droppedExcluded: true,
     },
+    filters,
   };
 }

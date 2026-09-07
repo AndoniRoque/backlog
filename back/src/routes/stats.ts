@@ -15,8 +15,21 @@ router.get("/", async (req, res) => {
     });
   }
 
+  const priority = req.query.priority ? String(req.query.priority) : undefined;
+  const store = req.query.store ? String(req.query.store) : undefined;
+
+  if (
+    priority &&
+    !["MAYBE_SOMEDAY", "MUST_PLAY", "FAVORITE", "DONE"].includes(priority)
+  ) {
+    return res.status(400).json({ error: "Invalid priority value" });
+  }
+
   try {
-    const statistics = await statsService.getStatistics(year);
+    const statistics = await statsService.getStatistics(year, {
+      store,
+      priority,
+    });
     return res.json(statistics);
   } catch (error) {
     console.error("Error loading statistics:", error);
