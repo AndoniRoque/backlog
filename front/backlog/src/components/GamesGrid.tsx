@@ -1,6 +1,14 @@
 "use client";
 
-import { Badge, Box, Grid, HStack, Spinner, Text } from "@chakra-ui/react";
+import {
+  Badge,
+  Box,
+  Button,
+  Grid,
+  HStack,
+  Spinner,
+  Text,
+} from "@chakra-ui/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { apiGet, apiSend } from "@/lib/api";
 import { Game } from "@/lib/types";
@@ -11,13 +19,21 @@ import {
   type PriorityOption,
   type StatusOption,
 } from "@/lib/gameOptions";
-import SearchInput, { SortBy, SortDir } from "./SearchInput";
+import SearchInput, { HoursFilter, SortBy, SortDir } from "./SearchInput";
 
 const PRIORITY_LABEL: Record<PriorityOption, string> = {
   MAYBE_SOMEDAY: "Maybe Someday",
   MUST_PLAY: "Must Play",
   FAVORITE: "Favorite",
   DONE: "Done",
+};
+
+const STATUS_LABEL: Record<StatusOption, string> = {
+  BACKLOG: "Backlog",
+  PLAYING: "Playing",
+  COMPLETED: "Completed",
+  DROPPED: "Dropped",
+  PAUSED: "Paused",
 };
 
 function buildGamesQuery(params: {
@@ -52,14 +68,22 @@ const FILTERS: FilterItem[] = [
     value: p,
     label: PRIORITY_LABEL[p],
   })),
-  ...STATUS_OPTIONS.filter((s) => s !== "DROPPED")
-    .filter((s) => s !== "PLAYING")
-    .map((s) => ({
+  ...STATUS_OPTIONS.filter((s) => s !== "PLAYING" && s !== "PAUSED").map(
+    (s) => ({
       type: "status" as const,
       value: s,
-      label: s,
-    })),
+      label: STATUS_LABEL[s],
+    }),
+  ),
 ];
+
+function matchesHoursFilter(hours: number | null, filter: HoursFilter) {
+  if (filter === "all") return true;
+  if (hours === null) return false;
+  if (filter === "short") return hours <= 10;
+  if (filter === "medium") return hours > 10 && hours <= 30;
+  return hours > 30;
+}
 
 function getGamePriorities(g: Game): PriorityOption[] {
   return Array.isArray(g.priority)
@@ -90,6 +114,7 @@ export function GamesGrid({
   const [selectedPriorities, setSelectedPriorities] = useState<
     PriorityOption[]
   >(() => ["MAYBE_SOMEDAY", "MUST_PLAY"]);
+  const [hoursFilter, setHoursFilter] = useState<HoursFilter>("all");
 
   const query = useMemo(
     () => buildGamesQuery({ store: selectedStore, title }),
@@ -166,11 +191,15 @@ export function GamesGrid({
         : g.priority
           ? [g.priority]
           : [];
+      const isCompleted =
+        g.status === "COMPLETED" || gamePriorities.includes("DONE");
 
       const statusOk =
         selectedStatuses.length === 0
           ? true
-          : selectedStatuses.includes(g.status);
+          : selectedStatuses.some((status) =>
+              status === "COMPLETED" ? isCompleted : status === g.status,
+            );
 
       const priorityOk =
         selectedPriorities.length === 0
@@ -179,7 +208,11 @@ export function GamesGrid({
             ? true
             : gamePriorities.some((p) => selectedPriorities.includes(p));
 
-      return priorityOk && statusOk;
+      return (
+        priorityOk &&
+        statusOk &&
+        matchesHoursFilter(g.estimatedHours, hoursFilter)
+      );
     });
 
     const dir = sortDir === "asc" ? 1 : -1;
@@ -207,7 +240,14 @@ export function GamesGrid({
     });
 
     return rows;
-  }, [data, selectedStatuses, selectedPriorities, sortBy, sortDir]);
+  }, [
+    data,
+    selectedStatuses,
+    selectedPriorities,
+    hoursFilter,
+    sortBy,
+    sortDir,
+  ]);
 
   const counts = useMemo(() => {
     // base = data ya viene filtrada por store + title en tu useEffect
@@ -220,10 +260,10 @@ export function GamesGrid({
     STATUS_OPTIONS.forEach((s) => (statusCounts[s] = 0));
     PRIORITY_OPTIONS.forEach((p) => (priorityCounts[p] = 0));
 
-    // Para cada juego, contamos:
-    // - status: si pasa el filtro de prioridades actual (y status sería el "candidate")
-    // - priority: si pasa el filtro de status actual (y priority sería el "candidate")
+    // Para cada juego, contamos status y prioridad respetando los filtros activos.
     for (const g of rows) {
+      if (!matchesHoursFilter(g.estimatedHours, hoursFilter)) continue;
+
       const gamePriorities = getGamePriorities(g);
 
       // ¿Pasa el filtro de prioridades actual?
@@ -238,12 +278,20 @@ export function GamesGrid({
       const passesCurrentStatuses =
         selectedStatuses.length === 0
           ? true
-          : selectedStatuses.includes(g.status);
+          : selectedStatuses.some((status) =>
+              status === "COMPLETED"
+                ? g.status === "COMPLETED" || gamePriorities.includes("DONE")
+                : status === g.status,
+            );
 
       // Contar status (respetando prioridades actuales)
       if (passesCurrentPriorities) {
-        if (g.status && statusCounts[g.status] !== undefined) {
-          statusCounts[g.status] += 1;
+        const statusKey =
+          g.status === "COMPLETED" || gamePriorities.includes("DONE")
+            ? "COMPLETED"
+            : g.status;
+        if (statusKey && statusCounts[statusKey] !== undefined) {
+          statusCounts[statusKey] += 1;
         }
       }
 
@@ -260,7 +308,7 @@ export function GamesGrid({
     }
 
     return { statusCounts, priorityCounts };
-  }, [data, selectedPriorities, selectedStatuses]);
+  }, [data, selectedPriorities, selectedStatuses, hoursFilter]);
 
   useEffect(() => {
     setVisibleCount(20);
@@ -313,7 +361,8 @@ export function GamesGrid({
                 whiteSpace="nowrap"
                 _hover={{ bg: "gray" }}
               >
-                {f.label}{" "}
+                {f.label}
+                {""}
                 <Box as="span" opacity={0.85} ml={2}>
                   ({total})
                 </Box>
@@ -324,7 +373,6 @@ export function GamesGrid({
 
         {/* <Input
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
           placeholder="Search by title…"
           w={"xs"}
         /> */}
@@ -337,7 +385,29 @@ export function GamesGrid({
             setSortBy(sortBy);
             setSortDir(sortDir);
           }}
+          hoursFilter={hoursFilter}
+          onHoursFilterChange={setHoursFilter}
         />
+      </HStack>
+
+      <HStack gap={2} mb={3} wrap="wrap">
+        {(selectedStatuses.length > 0 ||
+          selectedPriorities.length > 0 ||
+          hoursFilter !== "all" ||
+          title) && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setSelectedStatuses([]);
+              setSelectedPriorities([]);
+              setHoursFilter("all");
+              setTitle("");
+            }}
+          >
+            Clear filters
+          </Button>
+        )}
       </HStack>
 
       {loading && (

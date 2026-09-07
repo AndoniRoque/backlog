@@ -6,11 +6,13 @@ import {
   Input,
   Menu,
   Portal,
+  Text,
 } from "@chakra-ui/react";
 import { IoFilterCircleOutline } from "react-icons/io5";
 
 export type SortBy = "title" | "releaseYear" | "estimatedHours";
 export type SortDir = "asc" | "desc";
+export type HoursFilter = "all" | "short" | "medium" | "long";
 
 type Props = {
   title: string;
@@ -18,6 +20,8 @@ type Props = {
   sortBy: SortBy;
   sortDir: SortDir;
   onSortChange: (next: { sortBy: SortBy; sortDir: SortDir }) => void;
+  hoursFilter: HoursFilter;
+  onHoursFilterChange: (next: HoursFilter) => void;
 };
 
 function sortLabel(sortBy: SortBy, sortDir: SortDir) {
@@ -33,6 +37,8 @@ export default function SearchInput({
   sortBy,
   sortDir,
   onSortChange,
+  hoursFilter,
+  onHoursFilterChange,
 }: Props) {
   const isDefault = sortBy === "title" && sortDir === "asc";
   return (
@@ -110,6 +116,38 @@ export default function SearchInput({
                 >
                   Estimated hours (high → low)
                 </Menu.Item>
+
+                <Menu.Separator />
+
+                <Menu.ItemGroup>
+                  <Text fontSize="sm" opacity={0.7}>
+                    Duration
+                  </Text>
+                  <Menu.Item
+                    value="duration all"
+                    onClick={() => onHoursFilterChange("all")}
+                  >
+                    {hoursFilter === "all" ? "✓ " : ""}Any length
+                  </Menu.Item>
+                  <Menu.Item
+                    value="duration short"
+                    onClick={() => onHoursFilterChange("short")}
+                  >
+                    {hoursFilter === "short" ? "✓ " : ""}Up to 10h
+                  </Menu.Item>
+                  <Menu.Item
+                    value="duration medium"
+                    onClick={() => onHoursFilterChange("medium")}
+                  >
+                    {hoursFilter === "medium" ? "✓ " : ""}11 to 30h
+                  </Menu.Item>
+                  <Menu.Item
+                    value="duration long"
+                    onClick={() => onHoursFilterChange("long")}
+                  >
+                    {hoursFilter === "long" ? "✓ " : ""}Over 30h
+                  </Menu.Item>
+                </Menu.ItemGroup>
               </Menu.ItemGroup>
             </Menu.Content>
           </Menu.Positioner>
