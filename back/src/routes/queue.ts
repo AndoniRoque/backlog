@@ -53,4 +53,36 @@ r.delete("/:igdbId", async (req, res) => {
   }
 });
 
+r.post("/:igdbId/complete", async (req, res) => {
+  const { igdbId } = req.params;
+  const { priority, personalNote } = req.body;
+
+  if (isNaN(parseInt(igdbId))) {
+    return res.status(400).json({ error: "Invalid igdbId" });
+  }
+
+  if (priority !== "FAVORITE" && priority !== "DONE") {
+    return res.status(400).json({ error: "Invalid completion priority" });
+  }
+
+  if (
+    personalNote !== undefined &&
+    personalNote !== null &&
+    typeof personalNote !== "string"
+  ) {
+    return res.status(400).json({ error: "Invalid personal note" });
+  }
+
+  try {
+    const completed = await queueService.completeFromQueue(
+      parseInt(igdbId),
+      priority,
+      personalNote,
+    );
+    res.json(completed);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 export default r;

@@ -114,6 +114,44 @@ export async function removeFromQueue(igdbId: number) {
   });
 }
 
+export async function completeFromQueue(
+  igdbId: number,
+  priority: "FAVORITE" | "DONE",
+  personalNote?: string | null,
+) {
+  return prisma.$transaction(async (tx) => {
+    const game = await tx.game.findUnique({
+      where: { igdbId },
+      select: { igdbId: true },
+    });
+
+    if (!game) throw new Error("Game not found");
+
+    const updated = await tx.game.update({
+      where: { igdbId },
+      data: {
+        queuePosition: null,
+        status: "COMPLETED",
+        priority,
+        completedAt: new Date(),
+        personalNote: personalNote?.trim() || null,
+      },
+      select: {
+        igdbId: true,
+        title: true,
+        queuePosition: true,
+        status: true,
+        priority: true,
+        completedAt: true,
+        personalNote: true,
+      },
+    });
+
+    await syncPlayingWithQueueHead(tx);
+    return updated;
+  });
+}
+
 export async function syncPlayingWithQueueHead(tx: any) {
   const head = await tx.game.findFirst({
     where: { queuePosition: { not: null } },

@@ -120,6 +120,7 @@ export async function updateGameDetails(
     developers?: string[];
     store?: string;
     estimatedHours?: number;
+    personalNote?: string | null;
     status: Status;
     priority: PriorityTag;
   },
@@ -133,6 +134,8 @@ export async function updateGameDetails(
   if (details.store) updateData.store = details.store;
   if (details.estimatedHours)
     updateData.estimatedHours = details.estimatedHours;
+  if (details.personalNote !== undefined)
+    updateData.personalNote = details.personalNote;
   if (details.status) {
     updateData.status = details.status;
   }

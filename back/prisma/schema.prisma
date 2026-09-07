@@ -32,6 +32,7 @@ model Game {
   title          String
   releaseYear    Int?
   estimatedHours Int?
+  personalNote   String?
 
   status   GameStatus  @default(BACKLOG)
   priority PriorityTag @default(MAYBE_SOMEDAY)
