@@ -121,6 +121,7 @@ export async function updateGameDetails(
     store?: string;
     estimatedHours?: number;
     personalNote?: string | null;
+    completedAt?: string | null;
     status: Status;
     priority: PriorityTag;
   },
@@ -136,12 +137,17 @@ export async function updateGameDetails(
     updateData.estimatedHours = details.estimatedHours;
   if (details.personalNote !== undefined)
     updateData.personalNote = details.personalNote;
+  if (details.completedAt !== undefined) {
+    updateData.completedAt = details.completedAt
+      ? new Date(`${details.completedAt}T12:00:00.000Z`)
+      : null;
+  }
   if (details.status) {
     updateData.status = details.status;
   }
   if (details.priority) updateData.priority = details.priority;
 
-  if (details.status || details.priority) {
+  if (details.completedAt === undefined && (details.status || details.priority)) {
     const current = await prisma.game.findUnique({
       where: { igdbId: id },
       select: { completedAt: true },

@@ -118,6 +118,7 @@ export async function completeFromQueue(
   igdbId: number,
   priority: "FAVORITE" | "DONE",
   personalNote?: string | null,
+  completedAt?: string,
 ) {
   return prisma.$transaction(async (tx) => {
     const game = await tx.game.findUnique({
@@ -133,7 +134,9 @@ export async function completeFromQueue(
         queuePosition: null,
         status: "COMPLETED",
         priority,
-        completedAt: new Date(),
+        completedAt: completedAt
+          ? new Date(`${completedAt}T12:00:00.000Z`)
+          : new Date(),
         personalNote: personalNote?.trim() || null,
       },
       select: {

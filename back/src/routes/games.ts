@@ -108,6 +108,7 @@ r.patch("/:igdbId", async (req, res) => {
     store,
     estimatedHours,
     personalNote,
+    completedAt,
     status,
     priority,
   } = req.body;
@@ -124,6 +125,7 @@ r.patch("/:igdbId", async (req, res) => {
       store,
       estimatedHours,
       personalNote,
+      completedAt,
       status,
       priority,
     });

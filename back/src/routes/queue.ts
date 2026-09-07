@@ -55,7 +55,7 @@ r.delete("/:igdbId", async (req, res) => {
 
 r.post("/:igdbId/complete", async (req, res) => {
   const { igdbId } = req.params;
-  const { priority, personalNote } = req.body;
+  const { priority, personalNote, completedAt } = req.body;
 
   if (isNaN(parseInt(igdbId))) {
     return res.status(400).json({ error: "Invalid igdbId" });
@@ -73,11 +73,16 @@ r.post("/:igdbId/complete", async (req, res) => {
     return res.status(400).json({ error: "Invalid personal note" });
   }
 
+  if (completedAt !== undefined && typeof completedAt !== "string") {
+    return res.status(400).json({ error: "Invalid completion date" });
+  }
+
   try {
     const completed = await queueService.completeFromQueue(
       parseInt(igdbId),
       priority,
       personalNote,
+      completedAt,
     );
     res.json(completed);
   } catch (error: any) {
