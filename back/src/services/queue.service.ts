@@ -42,7 +42,15 @@ export async function addToQueue(igdbId: number) {
     const updated = await tx.game.update({
       where: { igdbId },
       data: { queuePosition: nextPos },
-      select: { igdbId: true, title: true, queuePosition: true },
+      select: { id: true, igdbId: true, title: true, queuePosition: true },
+    });
+
+    await tx.gameActivity.create({
+      data: {
+        gameId: updated.id,
+        type: "ADDED_TO_QUEUE",
+        detail: "Added to play next queue",
+      },
     });
 
     await syncPlayingWithQueueHead(tx);
@@ -106,7 +114,15 @@ export async function removeFromQueue(igdbId: number) {
           ? { status: "COMPLETED" as const, priority: "DONE" as const }
           : {}),
       },
-      select: { igdbId: true, title: true, queuePosition: true },
+      select: { id: true, igdbId: true, title: true, queuePosition: true },
+    });
+
+    await tx.gameActivity.create({
+      data: {
+        gameId: updated.id,
+        type: isHead ? "COMPLETED" : "REMOVED_FROM_QUEUE",
+        detail: isHead ? "Completed from queue" : "Removed from queue",
+      },
     });
 
     await syncPlayingWithQueueHead(tx);
@@ -123,7 +139,7 @@ export async function completeFromQueue(
   return prisma.$transaction(async (tx) => {
     const game = await tx.game.findUnique({
       where: { igdbId },
-      select: { igdbId: true },
+      select: { id: true, igdbId: true },
     });
 
     if (!game) throw new Error("Game not found");
@@ -150,16 +166,28 @@ export async function completeFromQueue(
       },
     });
 
+    await tx.gameActivity.create({
+      data: {
+        gameId: game.id,
+        type: "COMPLETED",
+        detail: `Completed from queue as ${priority}`,
+      },
+    });
+
     await syncPlayingWithQueueHead(tx);
     return updated;
   });
 }
 
 export async function syncPlayingWithQueueHead(tx: any) {
+  const previousPlaying = await tx.game.findMany({
+    where: { status: "PLAYING" },
+    select: { igdbId: true, id: true },
+  });
   const head = await tx.game.findFirst({
     where: { queuePosition: { not: null } },
     orderBy: { queuePosition: "asc" },
-    select: { igdbId: true },
+    select: { igdbId: true, id: true, status: true },
   });
 
   if (!head?.igdbId) {
@@ -171,6 +199,15 @@ export async function syncPlayingWithQueueHead(tx: any) {
         status: "BACKLOG",
       },
     });
+    for (const game of previousPlaying) {
+      await tx.gameActivity.create({
+        data: {
+          gameId: game.id,
+          type: "STATUS_CHANGED",
+          detail: "Status: PLAYING -> BACKLOG",
+        },
+      });
+    }
     return null;
   }
 
@@ -183,6 +220,28 @@ export async function syncPlayingWithQueueHead(tx: any) {
     where: { igdbId: head.igdbId },
     data: { status: "PLAYING" },
   });
+
+  if (head.status !== "PLAYING") {
+    await tx.gameActivity.create({
+      data: {
+        gameId: head.id,
+        type: "STATUS_CHANGED",
+        detail: "Status: BACKLOG -> PLAYING",
+      },
+    });
+  }
+
+  for (const game of previousPlaying) {
+    if (game.igdbId !== head.igdbId) {
+      await tx.gameActivity.create({
+        data: {
+          gameId: game.id,
+          type: "STATUS_CHANGED",
+          detail: "Status: PLAYING -> BACKLOG",
+        },
+      });
+    }
+  }
 
   return head.igdbId;
 }

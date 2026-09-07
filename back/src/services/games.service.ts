@@ -2,6 +2,8 @@ import { PriorityTag } from "@prisma/client";
 import { prisma } from "../prisma";
 import { searchGameInfo } from "./igdb.service";
 import { syncPlayingWithQueueHead } from "./queue.service";
+import { recordGameActivity } from "./activity.service";
+
 type Status = "BACKLOG" | "PLAYING" | "COMPLETED" | "DROPPED" | "PAUSED";
 
 export async function addFromIgdb(input: {
@@ -11,13 +13,12 @@ export async function addFromIgdb(input: {
   estimatedHours?: number;
 }) {
   const details = await searchGameInfo(input.igdbId);
-
   if (!details) throw new Error("Game not found in IGDB.");
   if (!details.igdbId || !details.title) {
     throw new Error("Invalid IGDB details (missing igdbId/title).");
   }
 
-  return prisma.game.upsert({
+  const game = await prisma.game.upsert({
     where: { igdbId: details.igdbId },
     update: {
       title: details.title,
@@ -43,6 +44,9 @@ export async function addFromIgdb(input: {
       estimatedHours: input.estimatedHours,
     },
   });
+
+  await recordGameActivity(details.igdbId, "ADDED", "Game added to library");
+  return game;
 }
 
 export async function getGames(input: {
@@ -82,26 +86,38 @@ export async function getGames(input: {
 }
 
 export async function getGameById(id: number) {
-  return prisma.game.findUnique({
-    where: { igdbId: id },
-  });
+  return prisma.game.findUnique({ where: { igdbId: id } });
 }
 
 export async function updateGamePriority(id: number, priority: PriorityTag) {
-  return prisma.game.update({
+  const current = await prisma.game.findUnique({
+    where: { igdbId: id },
+    select: { priority: true },
+  });
+  const updated = await prisma.game.update({
     where: { igdbId: id },
     data: {
       priority,
       ...(priority === "DONE" ? { completedAt: new Date() } : {}),
     },
   });
+
+  if (current?.priority !== priority) {
+    await recordGameActivity(
+      id,
+      "PRIORITY_CHANGED",
+      `Priority: ${current?.priority ?? "unknown"} -> ${priority}`,
+    );
+  }
+  return updated;
 }
 
-export async function updateGameStatus(
-  id: number,
-  status: "BACKLOG" | "PLAYING" | "COMPLETED" | "DROPPED" | "PAUSED",
-) {
-  return prisma.game.update({
+export async function updateGameStatus(id: number, status: Status) {
+  const current = await prisma.game.findUnique({
+    where: { igdbId: id },
+    select: { status: true },
+  });
+  const updated = await prisma.game.update({
     where: { igdbId: id },
     data: {
       status,
@@ -109,6 +125,15 @@ export async function updateGameStatus(
         status === "COMPLETED" || status === "DROPPED" ? new Date() : null,
     },
   });
+
+  if (current?.status !== status) {
+    await recordGameActivity(
+      id,
+      "STATUS_CHANGED",
+      `Status: ${current?.status ?? "unknown"} -> ${status}`,
+    );
+  }
+  return updated;
 }
 
 export async function updateGameDetails(
@@ -126,6 +151,15 @@ export async function updateGameDetails(
     priority: PriorityTag;
   },
 ) {
+  const current = await prisma.game.findUnique({
+    where: { igdbId: id },
+    select: {
+      status: true,
+      priority: true,
+      completedAt: true,
+      personalNote: true,
+    },
+  });
   const updateData: any = {};
 
   if (details.title) updateData.title = details.title;
@@ -133,30 +167,23 @@ export async function updateGameDetails(
   if (details.releaseYear) updateData.releaseYear = details.releaseYear;
   if (details.developers) updateData.developers = details.developers;
   if (details.store) updateData.store = details.store;
-  if (details.estimatedHours)
-    updateData.estimatedHours = details.estimatedHours;
-  if (details.personalNote !== undefined)
+  if (details.estimatedHours) updateData.estimatedHours = details.estimatedHours;
+  if (details.personalNote !== undefined) {
     updateData.personalNote = details.personalNote;
+  }
   if (details.completedAt !== undefined) {
     updateData.completedAt = details.completedAt
       ? new Date(`${details.completedAt}T12:00:00.000Z`)
       : null;
   }
-  if (details.status) {
-    updateData.status = details.status;
-  }
+  if (details.status) updateData.status = details.status;
   if (details.priority) updateData.priority = details.priority;
 
   if (details.completedAt === undefined && (details.status || details.priority)) {
-    const current = await prisma.game.findUnique({
-      where: { igdbId: id },
-      select: { completedAt: true },
-    });
     const isCompleted =
       details.status === "COMPLETED" ||
       details.status === "DROPPED" ||
       details.priority === "DONE";
-
     updateData.completedAt = isCompleted
       ? current?.completedAt ?? new Date()
       : null;
@@ -167,6 +194,21 @@ export async function updateGameDetails(
     data: updateData,
   });
 
+  const changes: string[] = [];
+  if (details.status && details.status !== current?.status) {
+    changes.push(`Status: ${current?.status ?? "unknown"} -> ${details.status}`);
+  }
+  if (details.priority && details.priority !== current?.priority) {
+    changes.push(
+      `Priority: ${current?.priority ?? "unknown"} -> ${details.priority}`,
+    );
+  }
+  if (details.completedAt !== undefined) changes.push("Completion date updated");
+  if (details.personalNote !== undefined) changes.push("Personal note updated");
+  if (changes.length) {
+    await recordGameActivity(id, "UPDATED", changes.join("; "));
+  }
+
   return updated;
 }
 
@@ -176,7 +218,6 @@ export async function deleteGame(igdbId: number) {
       where: { igdbId },
       select: { igdbId: true, status: true, queuePosition: true },
     });
-
     if (!game) throw new Error("Game not found");
 
     if (game.queuePosition !== null) {
@@ -186,12 +227,8 @@ export async function deleteGame(igdbId: number) {
       });
     }
 
-    await tx.game.delete({
-      where: { igdbId },
-    });
-
+    await tx.game.delete({ where: { igdbId } });
     await syncPlayingWithQueueHead(tx);
-
     return true;
   });
 }

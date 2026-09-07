@@ -1,7 +1,18 @@
 import e, { Router } from "express";
 import * as gamesService from "../services/games.service";
+import * as activityService from "../services/activity.service";
 
 const r = Router();
+
+r.get("/:igdbId/activity", async (req, res) => {
+  const { igdbId } = req.params;
+  if (isNaN(parseInt(igdbId))) {
+    return res.status(400).json({ error: "Invalid game ID" });
+  }
+
+  const activity = await activityService.getGameActivity(parseInt(igdbId));
+  res.json(activity);
+});
 
 r.get("/", async (req, res) => {
   const { status, sort, order } = req.query as {

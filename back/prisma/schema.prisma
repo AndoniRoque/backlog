@@ -50,7 +50,20 @@ model Game {
   // Orden "Play next" (null si no está en la cola)
   queuePosition Int? @unique
 
+  activities GameActivity[]
+
   @@index([title])
   @@index([status])
   @@index([priority])
+}
+
+model GameActivity {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  type      String
+  detail    String?
+  gameId    String
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@index([gameId, createdAt])
 }
