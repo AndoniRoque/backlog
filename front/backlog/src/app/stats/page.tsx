@@ -53,6 +53,7 @@ type Statistics = {
     title: string;
     store: string | null;
     estimatedHours: number | null;
+    status: "COMPLETED" | "DROPPED";
   }[];
   byStore: { store: string; count: number }[];
   byStatus: { status: string; count: number }[];
@@ -88,6 +89,7 @@ export default function StatisticsPage() {
   const [stats, setStats] = useState<Statistics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -116,6 +118,16 @@ export default function StatisticsPage() {
       cancelled = true;
     };
   }, [year]);
+
+  const selectedTimeline = useMemo(
+    () =>
+      stats?.completionTimeline.filter(
+        (game) =>
+          selectedMonth === null ||
+          new Date(game.date).getUTCMonth() === selectedMonth,
+      ) ?? [],
+    [selectedMonth, stats],
+  );
 
   const maxMonthlyCount = useMemo(
     () =>
@@ -257,6 +269,24 @@ export default function StatisticsPage() {
                         flex={1}
                         h="full"
                         justify="end"
+                        cursor="pointer"
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Show games from ${month.name}`}
+                        aria-pressed={selectedMonth === index}
+                        onClick={() =>
+                          setSelectedMonth((value) =>
+                            value === index ? null : index,
+                          )
+                        }
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            setSelectedMonth((value) =>
+                              value === index ? null : index,
+                            );
+                          }
+                        }}
                       >
                         <Text fontSize="xs" opacity={month.count ? 1 : 0.45}>
                           {month.count}
@@ -267,7 +297,13 @@ export default function StatisticsPage() {
                           h={height}
                           minH="3px"
                           borderRadius="sm"
-                          bg={month.count ? "teal.300" : "whiteAlpha.300"}
+                          bg={
+                            selectedMonth === index
+                              ? "orange.300"
+                              : month.count
+                                ? "teal.300"
+                                : "whiteAlpha.300"
+                          }
                           title={`${month.name}: ${month.count} games`}
                         />
                         <Text fontSize="xs" opacity={0.65}>
@@ -316,13 +352,28 @@ export default function StatisticsPage() {
 
             <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={5}>
               <Box p={4} borderWidth="1px" borderRadius="lg">
-                <Heading size="sm">Completion timeline</Heading>
-                <Text fontSize="sm" opacity={0.65} mb={4}>
-                  The games you finished in {year}
-                </Text>
+                <Flex justify="space-between" align="start" gap={3} mb={4}>
+                  <Box>
+                    <Heading size="sm">Completion timeline</Heading>
+                    <Text fontSize="sm" opacity={0.65}>
+                      {selectedMonth === null
+                        ? `Games closed in ${year}`
+                        : `Games closed in ${stats.monthlyCompleted[selectedMonth].name}`}
+                    </Text>
+                  </Box>
+                  {selectedMonth !== null && (
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      onClick={() => setSelectedMonth(null)}
+                    >
+                      Show all
+                    </Button>
+                  )}
+                </Flex>
                 <Stack gap={2} maxH="340px" overflowY="auto">
-                  {stats.completionTimeline.length ? (
-                    stats.completionTimeline.map((game) => (
+                  {selectedTimeline.length ? (
+                    selectedTimeline.map((game) => (
                       <Flex
                         key={`${game.igdbId}-${game.date}`}
                         justify="space-between"
@@ -340,9 +391,21 @@ export default function StatisticsPage() {
                           </Text>
                         </Box>
                         <Box textAlign="right" flexShrink={0}>
-                          <Text fontSize="sm">
-                            {new Date(game.date).toLocaleDateString()}
-                          </Text>
+                          <Flex align="center" justify="end" gap={2}>
+                            <Badge
+                              variant="subtle"
+                              colorPalette={
+                                game.status === "DROPPED" ? "red" : "green"
+                              }
+                            >
+                              {game.status === "DROPPED"
+                                ? "Dropped"
+                                : "Completed"}
+                            </Badge>
+                            <Text fontSize="sm">
+                              {new Date(game.date).toLocaleDateString()}
+                            </Text>
+                          </Flex>
                           <Text fontSize="xs" opacity={0.6}>
                             {game.estimatedHours ?? 0}h
                           </Text>
@@ -350,7 +413,11 @@ export default function StatisticsPage() {
                       </Flex>
                     ))
                   ) : (
-                    <Text opacity={0.65}>No completed games in this year.</Text>
+                    <Text opacity={0.65}>
+                      {selectedMonth === null
+                        ? `No closed games in ${year}.`
+                        : "No closed games in this month."}
+                    </Text>
                   )}
                 </Stack>
               </Box>
