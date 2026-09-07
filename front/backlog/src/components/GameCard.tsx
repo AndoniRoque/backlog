@@ -55,6 +55,11 @@ export default function GameCard(props: Props) {
     status as StatusOption,
   );
   const [formHours, setFormHours] = useState<number | "">(estimatedHours ?? "");
+  const [formCompletedAt, setFormCompletedAt] = useState("");
+
+  function dateInputValue(value: string | null) {
+    return value ? value.slice(0, 10) : "";
+  }
 
   function openEdit() {
     // Poblar SIEMPRE desde props para evitar stale state
@@ -62,6 +67,7 @@ export default function GameCard(props: Props) {
     setFormPriority((priority as PriorityOption) ?? "MAYBE_SOMEDAY");
     setFormStatus((status as StatusOption) ?? "BACKLOG");
     setFormHours(estimatedHours ?? "");
+    setFormCompletedAt(dateInputValue(props.completedAt));
     setEditOpen(true);
   }
 
@@ -82,6 +88,7 @@ export default function GameCard(props: Props) {
         store: formStore,
         priority: formPriority,
         estimatedHours: formHours === "" ? null : formHours,
+        completedAt: formCompletedAt || null,
         status: formStatus,
       });
 
@@ -90,6 +97,9 @@ export default function GameCard(props: Props) {
         store: formStore,
         priority: formPriority,
         estimatedHours: formHours === "" ? null : formHours,
+        completedAt: formCompletedAt
+          ? `${formCompletedAt}T12:00:00.000Z`
+          : null,
         status: formStatus as GameStatus,
       });
 
@@ -216,6 +226,8 @@ export default function GameCard(props: Props) {
         onStatusChange={setFormStatus}
         estimatedHours={formHours}
         onEstimatedHoursChange={setFormHours}
+        completedAt={formCompletedAt}
+        onCompletedAtChange={setFormCompletedAt}
         onConfirm={confirmEdit}
         onCancel={closeEdit}
         isSaving={saving}

@@ -25,6 +25,8 @@ type Props = {
   onStatusChange?: (s: StatusOption) => void;
   estimatedHours: number | "";
   onEstimatedHoursChange: (v: number | "") => void;
+  completedAt?: string;
+  onCompletedAtChange?: (v: string) => void;
   onConfirm: () => void;
   onCancel: () => void;
   isSaving?: boolean;
@@ -43,6 +45,8 @@ export default function AddGameDialog({
   onStatusChange,
   estimatedHours,
   onEstimatedHoursChange,
+  completedAt = "",
+  onCompletedAtChange = () => {},
   onConfirm,
   onCancel,
   isSaving,
@@ -136,6 +140,17 @@ export default function AddGameDialog({
                 placeholder="e.g. 12"
               />
             </Field.Root>
+
+            {mode === "edit" && (
+              <Field.Root mt="4">
+                <Field.Label>Completion date (optional)</Field.Label>
+                <Input
+                  type="date"
+                  value={completedAt}
+                  onChange={(event) => onCompletedAtChange(event.target.value)}
+                />
+              </Field.Root>
+            )}
           </Dialog.Body>
 
           <Dialog.Footer gap="2">

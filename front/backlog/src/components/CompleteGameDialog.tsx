@@ -4,6 +4,7 @@ import {
   Button,
   Dialog,
   Field,
+  Input,
   NativeSelect,
   Textarea,
 } from "@chakra-ui/react";
@@ -26,15 +27,23 @@ export default function CompleteGameDialog({
 }: Props) {
   const [priority, setPriority] = useState<"FAVORITE" | "DONE">("DONE");
   const [personalNote, setPersonalNote] = useState("");
+  const [completedAt, setCompletedAt] = useState("");
   const [saving, setSaving] = useState(false);
   const today = new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
   }).format(new Date());
+  const now = new Date();
+  const todayInput = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+  ].join("-");
 
   function handleOpenChange(nextOpen: boolean) {
     if (nextOpen) {
       setPriority("DONE");
       setPersonalNote("");
+      setCompletedAt(todayInput);
     }
     onOpenChange(nextOpen);
   }
@@ -47,7 +56,7 @@ export default function CompleteGameDialog({
       const updated = await apiSend<Game>(
         `/queue/${game.igdbId}/complete`,
         "POST",
-        { priority, personalNote },
+        { priority, personalNote, completedAt },
       );
       onCompleted({ ...game, ...updated });
       onOpenChange(false);
@@ -69,7 +78,7 @@ export default function CompleteGameDialog({
           <Dialog.Header>
             <Dialog.Title>Finish {game?.title ?? "game"}</Dialog.Title>
             <Dialog.Description>
-              The completion date will be set to today: {today}.
+              Choose the completion date. It defaults to today: {today}.
             </Dialog.Description>
           </Dialog.Header>
           <Dialog.Body>
@@ -87,6 +96,15 @@ export default function CompleteGameDialog({
                 </NativeSelect.Field>
                 <NativeSelect.Indicator />
               </NativeSelect.Root>
+            </Field.Root>
+
+            <Field.Root gap={2} mt={4}>
+              <Field.Label>Completion date</Field.Label>
+              <Input
+                type="date"
+                value={completedAt}
+                onChange={(event) => setCompletedAt(event.target.value)}
+              />
             </Field.Root>
 
             <Field.Root gap={2} mt={4}>
