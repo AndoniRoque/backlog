@@ -105,7 +105,8 @@ export async function updateGameStatus(
     where: { igdbId: id },
     data: {
       status,
-      completedAt: status === "COMPLETED" ? new Date() : null,
+      completedAt:
+        status === "COMPLETED" || status === "DROPPED" ? new Date() : null,
     },
   });
 }
@@ -143,7 +144,9 @@ export async function updateGameDetails(
       select: { completedAt: true },
     });
     const isCompleted =
-      details.status === "COMPLETED" || details.priority === "DONE";
+      details.status === "COMPLETED" ||
+      details.status === "DROPPED" ||
+      details.priority === "DONE";
 
     updateData.completedAt = isCompleted
       ? current?.completedAt ?? new Date()
