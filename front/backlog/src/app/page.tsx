@@ -30,7 +30,6 @@ export default function Home() {
 
   const handleQueueChanged = () => {
     setRefreshSignal((x) => x + 1);
-    setGamesRefreshSignal((x) => x + 1);
   };
 
   const selectedStoreLabel = useMemo(() => {

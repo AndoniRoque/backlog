@@ -194,7 +194,7 @@ export function QueuePanel({
           </Box>
         )}
 
-        {loading ? (
+        {loading && queue.length === 0 ? (
           <HStack>
             <Spinner size="sm" />
             <Text>Loading queue…</Text>

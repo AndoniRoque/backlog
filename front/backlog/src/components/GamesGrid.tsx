@@ -100,6 +100,7 @@ export function GamesGrid({
   const [err, setErr] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortBy>("title");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const hasLoadedRef = useRef(false);
 
   const [selectedStatuses, setSelectedStatuses] = useState<StatusOption[]>([]);
 
@@ -119,7 +120,7 @@ export function GamesGrid({
   useEffect(() => {
     let cancelled = false;
 
-    setLoading(true);
+    setLoading(!hasLoadedRef.current);
     setErr(null);
 
     (async () => {
@@ -131,6 +132,7 @@ export function GamesGrid({
           selectedStore === "__NONE__" ? rows.filter((g) => !g.store) : rows;
 
         setData(filtered);
+        hasLoadedRef.current = true;
       } catch (e) {
         if (!cancelled) console.error(e);
       } finally {
@@ -396,7 +398,7 @@ export function GamesGrid({
         </Box>
       )}
 
-      {!loading && !err && (
+      {!err && (
         <>
           <Grid templateColumns="repeat(auto-fill, minmax(240px, 1fr))" gap={3}>
             {filteredData.slice(0, visibleCount).map((g) => (

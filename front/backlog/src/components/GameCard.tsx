@@ -118,7 +118,20 @@ export default function GameCard(props: Props) {
   return (
     <Box p={3} borderWidth="1px" borderRadius="lg" position="relative">
       {/* store icon */}
-      <Box position="absolute" top={2} right={2}>
+      <Box
+        position="absolute"
+        top={-1}
+        right={3}
+        h={10}
+        bg="white"
+        borderRadius="0 0 4px 4px"
+        boxShadow="sm"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        zIndex={1}
+        p={1}
+      >
         <StoreIcon name={store} />
       </Box>
 
