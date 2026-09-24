@@ -1,7 +1,7 @@
 "use client";
 
 import type { Game, GameStatus } from "@/lib/types";
-import { EditIcon, ViewIcon } from "@chakra-ui/icons";
+import { EditIcon, TimeIcon, ViewIcon } from "@chakra-ui/icons";
 import {
   Badge,
   Box,
@@ -157,9 +157,17 @@ export default function GameCard(props: Props) {
                 <Badge>{status ?? "BACKLOG"}</Badge>
               </HStack>
             </Box>
-            <Text w={"full"}>
-              {estimatedHours ? estimatedHours + " Hours" : "-"}
-            </Text>
+            <Flex justify="space-between" w="full" align="center">
+              {estimatedHours ? (
+                <Tooltip content={`${estimatedHours} hours`}>
+                  <HStack gap={1} aria-label={`${estimatedHours} hours`}>
+                    <Text>{estimatedHours} Hr.</Text>
+                  </HStack>
+                </Tooltip>
+              ) : (
+                <Text w="full">-</Text>
+              )}
+            </Flex>
           </VStack>
         </Stack>
 
