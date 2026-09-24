@@ -146,7 +146,12 @@ export default function Home() {
           </GridItem>
 
           {/* Games */}
-          <GridItem overflow="auto" pr={{ base: 0, md: 2 }}>
+          <GridItem
+            minW={0}
+            overflow="auto"
+            pr={{ base: 0, md: 2 }}
+            css={{ scrollbarGutter: "stable" }}
+          >
             <GamesGrid
               selectedStore={selectedStore}
               refreshSignal={gamesRefreshSignal}
