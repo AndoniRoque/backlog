@@ -98,7 +98,7 @@ export default function CompleteGameDialog({
                 >
                   <option value="DONE">Completed / Done</option>
                   <option value="FAVORITE">Favorite</option>
-                  <option value="DROPPED">Dropped</option>
+                  <option value="DROPPED">Done / Dropped</option>
                 </NativeSelect.Field>
                 <NativeSelect.Indicator />
               </NativeSelect.Root>
