@@ -59,7 +59,12 @@ export default function CompleteGameDialog({
       const updated = await apiSend<Game>(
         `/queue/${game.igdbId}/complete`,
         "POST",
-        { result, personalNote, completedAt },
+        {
+          result,
+          priority: result === "DROPPED" ? "DONE" : result,
+          personalNote,
+          completedAt,
+        },
       );
       onCompleted({ ...game, ...updated });
       onOpenChange(false);
