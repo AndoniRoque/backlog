@@ -19,6 +19,15 @@ type Props = {
   onCompleted: (game: Game) => void;
 };
 
+function getTodayInputValue() {
+  const now = new Date();
+  return [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
 export default function CompleteGameDialog({
   open,
   game,
@@ -27,23 +36,17 @@ export default function CompleteGameDialog({
 }: Props) {
   const [result, setResult] = useState<"FAVORITE" | "DONE" | "DROPPED">("DONE");
   const [personalNote, setPersonalNote] = useState("");
-  const [completedAt, setCompletedAt] = useState("");
+  const [completedAt, setCompletedAt] = useState(getTodayInputValue);
   const [saving, setSaving] = useState(false);
   const today = new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
   }).format(new Date());
-  const now = new Date();
-  const todayInput = [
-    now.getFullYear(),
-    String(now.getMonth() + 1).padStart(2, "0"),
-    String(now.getDate()).padStart(2, "0"),
-  ].join("-");
 
   function handleOpenChange(nextOpen: boolean) {
     if (nextOpen) {
       setResult("DONE");
       setPersonalNote("");
-      setCompletedAt(todayInput);
+      setCompletedAt(getTodayInputValue());
     }
     onOpenChange(nextOpen);
   }
