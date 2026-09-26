@@ -132,14 +132,14 @@ export async function removeFromQueue(igdbId: number) {
 
 export async function completeFromQueue(
   igdbId: number,
-  priority: "FAVORITE" | "DONE",
+  result: "FAVORITE" | "DONE" | "DROPPED",
   personalNote?: string | null,
   completedAt?: string,
 ) {
   return prisma.$transaction(async (tx) => {
     const game = await tx.game.findUnique({
       where: { igdbId },
-      select: { id: true, igdbId: true },
+      select: { id: true, igdbId: true, priority: true },
     });
 
     if (!game) throw new Error("Game not found");
@@ -148,8 +148,8 @@ export async function completeFromQueue(
       where: { igdbId },
       data: {
         queuePosition: null,
-        status: "COMPLETED",
-        priority,
+        status: result === "DROPPED" ? "DROPPED" : "COMPLETED",
+        priority: result === "DROPPED" ? game.priority : result,
         completedAt: completedAt
           ? new Date(`${completedAt}T12:00:00.000Z`)
           : new Date(),
@@ -170,7 +170,10 @@ export async function completeFromQueue(
       data: {
         gameId: game.id,
         type: "COMPLETED",
-        detail: `Completed from queue as ${priority}`,
+        detail:
+          result === "DROPPED"
+            ? "Dropped from queue"
+            : `Completed from queue as ${result}`,
       },
     });
 

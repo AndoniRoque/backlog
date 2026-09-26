@@ -25,7 +25,7 @@ export default function CompleteGameDialog({
   onOpenChange,
   onCompleted,
 }: Props) {
-  const [priority, setPriority] = useState<"FAVORITE" | "DONE">("DONE");
+  const [result, setResult] = useState<"FAVORITE" | "DONE" | "DROPPED">("DONE");
   const [personalNote, setPersonalNote] = useState("");
   const [completedAt, setCompletedAt] = useState("");
   const [saving, setSaving] = useState(false);
@@ -41,7 +41,7 @@ export default function CompleteGameDialog({
 
   function handleOpenChange(nextOpen: boolean) {
     if (nextOpen) {
-      setPriority("DONE");
+      setResult("DONE");
       setPersonalNote("");
       setCompletedAt(todayInput);
     }
@@ -56,7 +56,7 @@ export default function CompleteGameDialog({
       const updated = await apiSend<Game>(
         `/queue/${game.igdbId}/complete`,
         "POST",
-        { priority, personalNote, completedAt },
+        { result, personalNote, completedAt },
       );
       onCompleted({ ...game, ...updated });
       onOpenChange(false);
@@ -86,13 +86,16 @@ export default function CompleteGameDialog({
               <Field.Label>Save as</Field.Label>
               <NativeSelect.Root>
                 <NativeSelect.Field
-                  value={priority}
+                  value={result}
                   onChange={(event) =>
-                    setPriority(event.target.value as "FAVORITE" | "DONE")
+                    setResult(
+                      event.target.value as "FAVORITE" | "DONE" | "DROPPED",
+                    )
                   }
                 >
                   <option value="DONE">Completed / Done</option>
                   <option value="FAVORITE">Favorite</option>
+                  <option value="DROPPED">Dropped</option>
                 </NativeSelect.Field>
                 <NativeSelect.Indicator />
               </NativeSelect.Root>
