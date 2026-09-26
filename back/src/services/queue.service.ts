@@ -132,7 +132,8 @@ export async function removeFromQueue(igdbId: number) {
 
 export async function completeFromQueue(
   igdbId: number,
-  result: "FAVORITE" | "DONE" | "DROPPED",
+  priority: "FAVORITE" | "DONE",
+  status: "COMPLETED" | "DROPPED",
   personalNote?: string | null,
   completedAt?: string,
 ) {
@@ -148,8 +149,8 @@ export async function completeFromQueue(
       where: { igdbId },
       data: {
         queuePosition: null,
-        status: result === "DROPPED" ? "DROPPED" : "COMPLETED",
-        priority: result === "DROPPED" ? "DONE" : result,
+        status,
+        priority,
         completedAt: completedAt
           ? new Date(`${completedAt}T12:00:00.000Z`)
           : new Date(),
@@ -171,9 +172,9 @@ export async function completeFromQueue(
         gameId: game.id,
         type: "COMPLETED",
         detail:
-          result === "DROPPED"
+          status === "DROPPED"
             ? "Dropped from queue"
-            : `Completed from queue as ${result}`,
+            : `Completed from queue as ${priority}`,
       },
     });
 

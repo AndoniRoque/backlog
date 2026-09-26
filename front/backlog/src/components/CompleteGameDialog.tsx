@@ -54,14 +54,19 @@ export default function CompleteGameDialog({
   async function handleComplete() {
     if (!game || typeof game.igdbId !== "number") return;
 
+    const completion = {
+      DONE: { priority: "DONE", status: "COMPLETED" },
+      FAVORITE: { priority: "FAVORITE", status: "COMPLETED" },
+      DROPPED: { priority: "DONE", status: "DROPPED" },
+    }[result];
+
     setSaving(true);
     try {
       const updated = await apiSend<Game>(
         `/queue/${game.igdbId}/complete`,
         "POST",
         {
-          result,
-          priority: result === "DROPPED" ? "DONE" : result,
+          ...completion,
           personalNote,
           completedAt,
         },
@@ -103,7 +108,7 @@ export default function CompleteGameDialog({
                 >
                   <option value="DONE">Completed / Done</option>
                   <option value="FAVORITE">Favorite</option>
-                  <option value="DROPPED">Done / Dropped</option>
+                  <option value="DROPPED">Dropped</option>
                 </NativeSelect.Field>
                 <NativeSelect.Indicator />
               </NativeSelect.Root>

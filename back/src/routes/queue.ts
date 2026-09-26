@@ -55,14 +55,18 @@ r.delete("/:igdbId", async (req, res) => {
 
 r.post("/:igdbId/complete", async (req, res) => {
   const { igdbId } = req.params;
-  const { result, personalNote, completedAt } = req.body;
+  const { priority, status, personalNote, completedAt } = req.body;
 
   if (isNaN(parseInt(igdbId))) {
     return res.status(400).json({ error: "Invalid igdbId" });
   }
 
-  if (result !== "FAVORITE" && result !== "DONE" && result !== "DROPPED") {
-    return res.status(400).json({ error: "Invalid completion result" });
+  const validCompletion =
+    (priority === "DONE" &&
+      (status === "COMPLETED" || status === "DROPPED")) ||
+    (priority === "FAVORITE" && status === "COMPLETED");
+  if (!validCompletion) {
+    return res.status(400).json({ error: "Invalid completion priority or status" });
   }
 
   if (
@@ -80,7 +84,8 @@ r.post("/:igdbId/complete", async (req, res) => {
   try {
     const completed = await queueService.completeFromQueue(
       parseInt(igdbId),
-      result,
+      priority,
+      status,
       personalNote,
       completedAt,
     );
