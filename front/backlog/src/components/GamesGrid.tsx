@@ -281,9 +281,11 @@ export function GamesGrid({
       // Contar status (respetando prioridades actuales)
       if (passesCurrentPriorities) {
         const statusKey =
-          g.status === "COMPLETED" || gamePriorities.includes("DONE")
-            ? "COMPLETED"
-            : g.status;
+          g.status === "DROPPED"
+            ? "DROPPED"
+            : g.status === "COMPLETED" || gamePriorities.includes("DONE")
+              ? "COMPLETED"
+              : g.status;
         if (statusKey && statusCounts[statusKey] !== undefined) {
           statusCounts[statusKey] += 1;
         }

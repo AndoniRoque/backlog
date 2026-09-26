@@ -139,7 +139,7 @@ export async function completeFromQueue(
   return prisma.$transaction(async (tx) => {
     const game = await tx.game.findUnique({
       where: { igdbId },
-      select: { id: true, igdbId: true, priority: true },
+      select: { id: true, igdbId: true },
     });
 
     if (!game) throw new Error("Game not found");
@@ -149,7 +149,7 @@ export async function completeFromQueue(
       data: {
         queuePosition: null,
         status: result === "DROPPED" ? "DROPPED" : "COMPLETED",
-        priority: result === "DROPPED" ? game.priority : result,
+        priority: result === "DROPPED" ? "DONE" : result,
         completedAt: completedAt
           ? new Date(`${completedAt}T12:00:00.000Z`)
           : new Date(),

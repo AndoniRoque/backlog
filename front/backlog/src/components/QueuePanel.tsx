@@ -258,6 +258,7 @@ export function QueuePanel({
       />
 
       <CompleteGameDialog
+        key={completingGame?.igdbId ?? "complete-game"}
         open={completingGame !== null}
         game={completingGame}
         onOpenChange={(open) => {
