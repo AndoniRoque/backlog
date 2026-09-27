@@ -2,7 +2,7 @@
 
 import Squares from "@/components/reactBits/Squares";
 import { apiGet } from "@/lib/api";
-import { PRIORITY_OPTIONS, STORE_OPTIONS } from "@/lib/gameOptions";
+import { STORE_OPTIONS } from "@/lib/gameOptions";
 import {
   Badge,
   Box,
@@ -11,7 +11,6 @@ import {
   Grid,
   Heading,
   HStack,
-  NativeSelect,
   Spinner,
   Stack,
   Text,
@@ -42,6 +41,7 @@ type Statistics = {
     backlogGames: number;
     playingGames: number;
     droppedGames: number;
+    droppedThisYear: number;
   };
   monthlyCompleted: {
     month: number;
@@ -61,7 +61,7 @@ type Statistics = {
   byStore: { store: string; count: number }[];
   byStatus: { status: string; count: number }[];
   hours: { completedEstimated: number; droppedExcluded: boolean };
-  filters: { store?: string; priority?: string };
+  filters: { store?: string };
 };
 
 function StatCard({
@@ -94,8 +94,7 @@ export default function StatisticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
-  const [storeFilter, setStoreFilter] = useState("");
-  const [priorityFilter, setPriorityFilter] = useState("");
+  const [selectedStore, setSelectedStore] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -103,8 +102,6 @@ export default function StatisticsPage() {
     setError(null);
 
     const params = new URLSearchParams({ year: String(year) });
-    if (storeFilter) params.set("store", storeFilter);
-    if (priorityFilter) params.set("priority", priorityFilter);
 
     apiGet<Statistics>(`/stats?${params.toString()}`)
       .then((data) => {
@@ -127,9 +124,9 @@ export default function StatisticsPage() {
     return () => {
       cancelled = true;
     };
-  }, [priorityFilter, storeFilter, year]);
+  }, [year]);
 
-  const selectedTimeline = useMemo(
+  const periodGames = useMemo(
     () =>
       stats?.completionTimeline.filter(
         (game) =>
@@ -139,22 +136,101 @@ export default function StatisticsPage() {
     [selectedMonth, stats],
   );
 
-  const maxMonthlyCount = useMemo(
+  const selectedTimeline = useMemo(
     () =>
-      Math.max(
-        ...(stats?.monthlyCompleted.map((month) => month.count) ?? [0]),
-        1,
+      periodGames.filter(
+        (game) =>
+          selectedStore === null ||
+          (game.store?.trim() || "No store") === selectedStore,
       ),
-    [stats],
+    [periodGames, selectedStore],
+  );
+
+  const periodSummary = useMemo(() => {
+    const completedGames = selectedTimeline.filter(
+      (game) => game.status === "COMPLETED",
+    );
+    const totalEstimatedHours = completedGames.reduce(
+      (total, game) => total + (game.estimatedHours ?? 0),
+      0,
+    );
+
+    return {
+      completedGames: completedGames.length,
+      droppedGames: selectedTimeline.filter((game) => game.status === "DROPPED")
+        .length,
+      totalEstimatedHours,
+      averageEstimatedHours:
+        completedGames.length > 0
+          ? Number((totalEstimatedHours / completedGames.length).toFixed(1))
+          : 0,
+    };
+  }, [selectedTimeline]);
+
+  const periodByStore = useMemo(() => {
+    const counts: Record<
+      string,
+      { completedGames: number; droppedGames: number }
+    > = Object.fromEntries(
+      STORE_OPTIONS.map((store) => [
+        store,
+        { completedGames: 0, droppedGames: 0 },
+      ]),
+    );
+
+    for (const game of periodGames) {
+      const store = game.store?.trim() || "No store";
+      counts[store] ??= { completedGames: 0, droppedGames: 0 };
+      if (game.status === "COMPLETED") counts[store].completedGames += 1;
+      if (game.status === "DROPPED") counts[store].droppedGames += 1;
+    }
+
+    const knownStores = new Set<string>(STORE_OPTIONS);
+    const additionalStores = Object.keys(counts)
+      .filter((store) => !knownStores.has(store))
+      .sort((a, b) => a.localeCompare(b));
+
+    return [...STORE_OPTIONS, ...additionalStores].map((store) => ({
+      store,
+      ...counts[store],
+    }));
+  }, [periodGames]);
+
+  const monthlyByStore = useMemo(() => {
+    const months = Array.from({ length: 12 }, () => ({
+      completedGames: 0,
+      droppedGames: 0,
+    }));
+
+    for (const game of stats?.completionTimeline ?? []) {
+      if (
+        selectedStore !== null &&
+        (game.store?.trim() || "No store") !== selectedStore
+      ) {
+        continue;
+      }
+
+      const month = months[new Date(game.date).getUTCMonth()];
+      if (game.status === "COMPLETED") month.completedGames += 1;
+      if (game.status === "DROPPED") month.droppedGames += 1;
+    }
+
+    return months;
+  }, [selectedStore, stats]);
+
+  const periodLabel =
+    selectedMonth === null
+      ? String(year)
+      : `${stats?.monthlyCompleted[selectedMonth]?.name ?? MONTHS[selectedMonth]} ${year}`;
+
+  const maxMonthlyCount = useMemo(
+    () => Math.max(...monthlyByStore.map((month) => month.completedGames), 1),
+    [monthlyByStore],
   );
 
   const maxDroppedCount = useMemo(
-    () =>
-      Math.max(
-        ...(stats?.monthlyDropped.map((month) => month.count) ?? [0]),
-        1,
-      ),
-    [stats],
+    () => Math.max(...monthlyByStore.map((month) => month.droppedGames), 1),
+    [monthlyByStore],
   );
 
   return (
@@ -189,40 +265,6 @@ export default function StatisticsPage() {
             <Heading size={{ base: "lg", md: "xl" }}>Statistics</Heading>
           </Box>
           <HStack wrap="wrap" justify="end">
-            <NativeSelect.Root size="sm" w="150px">
-              <NativeSelect.Field
-                value={storeFilter}
-                onChange={(event) => {
-                  setSelectedMonth(null);
-                  setStoreFilter(event.target.value);
-                }}
-              >
-                <option value="">All stores</option>
-                {STORE_OPTIONS.map((store) => (
-                  <option key={store} value={store}>
-                    {store}
-                  </option>
-                ))}
-              </NativeSelect.Field>
-              <NativeSelect.Indicator />
-            </NativeSelect.Root>
-            <NativeSelect.Root size="sm" w="160px">
-              <NativeSelect.Field
-                value={priorityFilter}
-                onChange={(event) => {
-                  setSelectedMonth(null);
-                  setPriorityFilter(event.target.value);
-                }}
-              >
-                <option value="">All priorities</option>
-                {PRIORITY_OPTIONS.map((priority) => (
-                  <option key={priority} value={priority}>
-                    {priority.replaceAll("_", " ")}
-                  </option>
-                ))}
-              </NativeSelect.Field>
-              <NativeSelect.Indicator />
-            </NativeSelect.Root>
             <Button
               variant="outline"
               size="sm"
@@ -275,19 +317,19 @@ export default function StatisticsPage() {
               gap={3}
             >
               <StatCard
-                label="Completed"
-                value={stats.summary.completedGames}
-                detail={`games finished in ${year}`}
+                label="Completed / Dropped"
+                value={`${periodSummary.completedGames} / ${periodSummary.droppedGames}`}
+                detail={`games closed in ${periodLabel}`}
               />
               <StatCard
                 label="Estimated hours"
-                value={`${stats.summary.totalEstimatedHours}h`}
-                detail="completed games only"
+                value={`${periodSummary.totalEstimatedHours}h`}
+                detail={`completed games in ${periodLabel}`}
               />
               <StatCard
                 label="Average length"
-                value={`${stats.summary.averageEstimatedHours}h`}
-                detail="per completed game"
+                value={`${periodSummary.averageEstimatedHours}h`}
+                detail={`per completed game in ${periodLabel}`}
               />
               <StatCard
                 label="Still in backlog"
@@ -296,13 +338,19 @@ export default function StatisticsPage() {
               />
             </Grid>
 
-            <Grid templateColumns={{ base: "1fr", lg: "2fr 1fr" }} gap={5}>
+            <Grid
+              templateColumns={{ base: "1fr", lg: "2fr 1fr" }}
+              gap={5}
+              alignItems="start"
+            >
               <Box p={4} borderWidth="1px" borderRadius="lg">
                 <Flex justify="space-between" align="center" mb={5}>
                   <Box>
                     <Heading size="sm">Completion rhythm</Heading>
                     <Text fontSize="sm" opacity={0.65}>
-                      Games finished month by month
+                      {selectedStore
+                        ? `${selectedStore} games closed month by month`
+                        : "Games closed month by month"}
                     </Text>
                   </Box>
                   <Badge variant="outline">
@@ -323,7 +371,8 @@ export default function StatisticsPage() {
                 </HStack>
                 <Flex h="190px" align="end" gap={{ base: 1, md: 3 }}>
                   {stats.monthlyCompleted.map((month, index) => {
-                    const height = `${Math.max((month.count / maxMonthlyCount) * 100, month.count ? 8 : 2)}%`;
+                    const monthStats = monthlyByStore[index];
+                    const height = `${Math.max((monthStats.completedGames / maxMonthlyCount) * 100, monthStats.completedGames ? 8 : 2)}%`;
                     return (
                       <Stack
                         key={month.month}
@@ -351,8 +400,11 @@ export default function StatisticsPage() {
                           }
                         }}
                       >
-                        <Text fontSize="xs" opacity={month.count ? 1 : 0.45}>
-                          {month.count}
+                        <Text
+                          fontSize="xs"
+                          opacity={monthStats.completedGames ? 1 : 0.45}
+                        >
+                          {monthStats.completedGames}
                         </Text>
                         <Box
                           w="full"
@@ -363,20 +415,20 @@ export default function StatisticsPage() {
                           bg={
                             selectedMonth === index
                               ? "orange.300"
-                              : month.count
+                              : monthStats.completedGames
                                 ? "teal.300"
                                 : "whiteAlpha.300"
                           }
-                          title={`${month.name}: ${month.count} games`}
+                          title={`${month.name}: ${monthStats.completedGames} completed`}
                         />
                         <Box
                           w="full"
                           maxW="34px"
-                          h={`${Math.max((stats.monthlyDropped[index].count / maxDroppedCount) * 100, stats.monthlyDropped[index].count ? 8 : 2)}%`}
+                          h={`${Math.max((monthStats.droppedGames / maxDroppedCount) * 100, monthStats.droppedGames ? 8 : 2)}%`}
                           minH="3px"
                           borderRadius="sm"
                           bg="red.300"
-                          title={`${month.name}: ${stats.monthlyDropped[index].count} dropped`}
+                          title={`${month.name}: ${monthStats.droppedGames} dropped`}
                         />
                         <Text fontSize="xs" opacity={0.65}>
                           {MONTHS[index]}
@@ -390,15 +442,61 @@ export default function StatisticsPage() {
               <Box p={4} borderWidth="1px" borderRadius="lg">
                 <Heading size="sm">Where you play</Heading>
                 <Text fontSize="sm" opacity={0.65} mb={4}>
-                  Completed games by store
+                  Completed / dropped in {periodLabel}
                 </Text>
-                <Stack gap={3}>
-                  {stats.byStore.length ? (
-                    stats.byStore.map((store) => (
-                      <Box key={store.store}>
+                <Stack gap={3} maxH="240px" overflowY="auto" pr={2}>
+                  {periodByStore.map((store) => {
+                    const totalGames =
+                      store.completedGames + store.droppedGames;
+                    const completedWidth =
+                      totalGames > 0
+                        ? `${(store.completedGames / totalGames) * 100}%`
+                        : "0%";
+                    const droppedWidth =
+                      totalGames > 0
+                        ? `${(store.droppedGames / totalGames) * 100}%`
+                        : "0%";
+
+                    return (
+                      <Box
+                        key={store.store}
+                        role="button"
+                        tabIndex={0}
+                        aria-pressed={selectedStore === store.store}
+                        aria-label={`${selectedStore === store.store ? "Show all stores" : "Filter by"} ${store.store}`}
+                        cursor="pointer"
+                        p={2}
+                        borderWidth="1px"
+                        borderRadius="md"
+                        borderColor={
+                          selectedStore === store.store
+                            ? "orange.300"
+                            : "transparent"
+                        }
+                        bg={
+                          selectedStore === store.store
+                            ? "whiteAlpha.100"
+                            : "transparent"
+                        }
+                        onClick={() =>
+                          setSelectedStore((current) =>
+                            current === store.store ? null : store.store,
+                          )
+                        }
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            setSelectedStore((current) =>
+                              current === store.store ? null : store.store,
+                            );
+                          }
+                        }}
+                      >
                         <Flex justify="space-between" fontSize="sm">
                           <Text>{store.store}</Text>
-                          <Text fontWeight="bold">{store.count}</Text>
+                          <Text fontWeight="bold">
+                            {store.completedGames} / {store.droppedGames}
+                          </Text>
                         </Flex>
                         <Box
                           mt={1}
@@ -407,17 +505,17 @@ export default function StatisticsPage() {
                           borderRadius="full"
                           overflow="hidden"
                         >
-                          <Box
+                          <Flex
                             h="full"
-                            bg="orange.300"
-                            w={`${(store.count / stats.summary.completedGames) * 100}%`}
-                          />
+                            w={`${(totalGames / Math.max(...periodByStore.map((item) => item.completedGames + item.droppedGames), 1)) * 100}%`}
+                          >
+                            <Box h="full" bg="orange.300" w={completedWidth} />
+                            <Box h="full" bg="red.300" w={droppedWidth} />
+                          </Flex>
                         </Box>
                       </Box>
-                    ))
-                  ) : (
-                    <Text opacity={0.65}>No completed games in this year.</Text>
-                  )}
+                    );
+                  })}
                 </Stack>
               </Box>
             </Grid>
@@ -428,9 +526,7 @@ export default function StatisticsPage() {
                   <Box>
                     <Heading size="sm">Completion timeline</Heading>
                     <Text fontSize="sm" opacity={0.65}>
-                      {selectedMonth === null
-                        ? `Games closed in ${year}`
-                        : `Games closed in ${stats.monthlyCompleted[selectedMonth].name}`}
+                      Games closed in {periodLabel}
                     </Text>
                   </Box>
                   {selectedMonth !== null && (
@@ -514,8 +610,8 @@ export default function StatisticsPage() {
                     </Flex>
                   ))}
                   <Text fontSize="xs" opacity={0.6} mt={2}>
-                    Dropped games: {stats.summary.droppedGames}. Their estimated
-                    hours are excluded from the completed total.
+                    Currently dropped games: {stats.summary.droppedGames}. Their
+                    estimated hours are excluded from the completed total.
                   </Text>
                 </Stack>
               </Box>

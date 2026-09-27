@@ -17,7 +17,7 @@ const MONTH_NAMES = [
 
 export async function getStatistics(
   year: number,
-  filters: { store?: string; priority?: string } = {},
+  filters: { store?: string } = {},
 ) {
   const games = await prisma.game.findMany({
     orderBy: [{ completedAt: "asc" }, { title: "asc" }],
@@ -25,8 +25,8 @@ export async function getStatistics(
 
   const filteredGames = games.filter(
     (game) =>
-      (!filters.store || (game.store?.trim() || "No store") === filters.store) &&
-      (!filters.priority || game.priority === filters.priority),
+      !filters.store ||
+      (game.store?.trim() || "No store") === filters.store,
   );
 
   const completedThisYear = filteredGames.filter(
@@ -107,6 +107,9 @@ export async function getStatistics(
       backlogGames: filteredGames.filter((game) => game.status === "BACKLOG").length,
       playingGames: filteredGames.filter((game) => game.status === "PLAYING").length,
       droppedGames: filteredGames.filter((game) => game.status === "DROPPED").length,
+      droppedThisYear: closedThisYear.filter(
+        (game) => game.status === "DROPPED",
+      ).length,
     },
     monthlyCompleted,
     monthlyDropped,
