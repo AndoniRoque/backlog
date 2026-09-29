@@ -437,11 +437,6 @@ export default function StatisticsPage() {
                           : "Games closed month by month"}
                     </Text>
                   </Box>
-                  <Badge variant="outline">
-                    {stats.hours.droppedExcluded
-                      ? "Dropped excluded"
-                      : "All statuses"}
-                  </Badge>
                 </Flex>
                 <HStack gap={4} mb={3} fontSize="xs" opacity={0.75}>
                   <HStack gap={1}>
@@ -454,18 +449,22 @@ export default function StatisticsPage() {
                   </HStack>
                 </HStack>
                 {year === null ? (
-                  <Flex
+                  <Grid
                     h="210px"
-                    align="end"
-                    gap={{ base: 2, md: 4 }}
+                    alignItems="end"
+                    gap={{ base: 1, md: 2 }}
+                    w="full"
+                    minW={0}
                     overflowX="auto"
+                    templateColumns={`repeat(${Math.max(annualSummary.length, 1)}, minmax(0, 1fr))`}
                   >
                     {annualSummary.map((yearStats) => (
                       <Stack
                         key={yearStats.year}
                         gap={1}
                         align="center"
-                        flex="0 0 52px"
+                        w="full"
+                        minW={0}
                         h="full"
                         justify="end"
                         cursor="pointer"
@@ -487,9 +486,17 @@ export default function StatisticsPage() {
                         <Text fontSize="xs">
                           {yearStats.completedGames}/{yearStats.droppedGames}
                         </Text>
-                        <Flex align="end" justify="center" gap={1} h="140px">
+                        <Flex
+                          align="end"
+                          justify="center"
+                          gap={1}
+                          h="140px"
+                          w="full"
+                        >
                           <Box
-                            w="16px"
+                            w="40%"
+                            minW="4px"
+                            maxW="24px"
                             h={`${Math.max((yearStats.completedGames / maxAnnualCount) * 100, yearStats.completedGames ? 5 : 2)}%`}
                             minH="3px"
                             borderRadius="sm"
@@ -497,7 +504,9 @@ export default function StatisticsPage() {
                             title={`${yearStats.year}: ${yearStats.completedGames} completed`}
                           />
                           <Box
-                            w="16px"
+                            w="40%"
+                            minW="4px"
+                            maxW="24px"
                             h={`${Math.max((yearStats.droppedGames / maxAnnualCount) * 100, yearStats.droppedGames ? 5 : 2)}%`}
                             minH="3px"
                             borderRadius="sm"
@@ -515,20 +524,24 @@ export default function StatisticsPage() {
                         No closed games with a completion date.
                       </Text>
                     )}
-                  </Flex>
+                  </Grid>
                 ) : (
-                  <Flex
+                  <Grid
                     h="210px"
-                    align="end"
-                    gap={{ base: 2, md: 4 }}
+                    alignItems="end"
+                    gap={{ base: 1, md: 2 }}
+                    w="full"
+                    minW={0}
                     overflowX="auto"
+                    templateColumns="repeat(12, minmax(0, 1fr))"
                   >
                     {monthlySummary.map((monthStats, index) => (
                       <Stack
                         key={index}
                         gap={1}
                         align="center"
-                        flex="0 0 48px"
+                        w="full"
+                        minW={0}
                         h="full"
                         justify="end"
                         cursor="pointer"
@@ -553,9 +566,17 @@ export default function StatisticsPage() {
                         <Text fontSize="xs">
                           {monthStats.completedGames}/{monthStats.droppedGames}
                         </Text>
-                        <Flex align="end" justify="center" gap={1} h="140px">
+                        <Flex
+                          align="end"
+                          justify="center"
+                          gap={1}
+                          h="140px"
+                          w="full"
+                        >
                           <Box
-                            w="16px"
+                            w="40%"
+                            minW="4px"
+                            maxW="24px"
                             h={`${Math.max((monthStats.completedGames / maxMonthlyCompleted) * 100, monthStats.completedGames ? 5 : 2)}%`}
                             minH="3px"
                             borderRadius="sm"
@@ -567,7 +588,9 @@ export default function StatisticsPage() {
                             title={`${monthStats.name}: ${monthStats.completedGames} completed`}
                           />
                           <Box
-                            w="16px"
+                            w="40%"
+                            minW="4px"
+                            maxW="24px"
                             h={`${Math.max((monthStats.droppedGames / maxMonthlyDropped) * 100, monthStats.droppedGames ? 5 : 2)}%`}
                             minH="3px"
                             borderRadius="sm"
@@ -580,7 +603,7 @@ export default function StatisticsPage() {
                         </Text>
                       </Stack>
                     ))}
-                  </Flex>
+                  </Grid>
                 )}
               </Box>
 
