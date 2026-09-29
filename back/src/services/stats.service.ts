@@ -16,7 +16,7 @@ const MONTH_NAMES = [
 ];
 
 export async function getStatistics(
-  year: number,
+  year: number | null,
   filters: { store?: string } = {},
 ) {
   const games = await prisma.game.findMany({
@@ -29,6 +29,15 @@ export async function getStatistics(
       (game.store?.trim() || "No store") === filters.store,
   );
 
+  const allClosedGames = filteredGames.filter(
+    (game) =>
+      (game.status === "DROPPED" ||
+        game.status === "COMPLETED" ||
+        game.priority === "DONE" ||
+        game.priority === "FAVORITE") &&
+      game.completedAt !== null,
+  );
+
   const completedThisYear = filteredGames.filter(
     (game) =>
       game.status !== "DROPPED" &&
@@ -36,7 +45,7 @@ export async function getStatistics(
         game.priority === "DONE" ||
         game.priority === "FAVORITE") &&
       game.completedAt !== null &&
-      game.completedAt.getUTCFullYear() === year,
+      (year === null || game.completedAt.getUTCFullYear() === year),
   );
 
   const closedThisYear = filteredGames.filter(
@@ -46,7 +55,7 @@ export async function getStatistics(
         game.priority === "DONE" ||
         game.priority === "FAVORITE") &&
       game.completedAt !== null &&
-      game.completedAt.getUTCFullYear() === year,
+      (year === null || game.completedAt.getUTCFullYear() === year),
   );
 
   const monthlyCompleted = MONTH_NAMES.map((name, index) => {
@@ -128,6 +137,15 @@ export async function getStatistics(
     monthlyCompleted,
     monthlyDropped,
     completionTimeline: closedThisYear.map((game) => ({
+      date: game.completedAt!.toISOString(),
+      igdbId: game.igdbId,
+      title: game.title,
+      store: game.store,
+      estimatedHours: game.estimatedHours,
+      priority: game.priority,
+      status: game.status === "DROPPED" ? "DROPPED" : "COMPLETED",
+    })),
+    annualTimeline: allClosedGames.map((game) => ({
       date: game.completedAt!.toISOString(),
       igdbId: game.igdbId,
       title: game.title,

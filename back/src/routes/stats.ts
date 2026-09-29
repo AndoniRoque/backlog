@@ -5,11 +5,13 @@ const router = Router();
 
 router.get("/", async (req, res) => {
   const requestedYear = req.query.year;
-  const year = requestedYear
-    ? Number.parseInt(String(requestedYear), 10)
-    : new Date().getUTCFullYear();
+  const year = requestedYear === "all"
+    ? null
+    : requestedYear
+      ? Number.parseInt(String(requestedYear), 10)
+      : new Date().getUTCFullYear();
 
-  if (!Number.isInteger(year) || year < 1970 || year > 2100) {
+  if (year !== null && (!Number.isInteger(year) || year < 1970 || year > 2100)) {
     return res.status(400).json({
       error: "year must be a valid four-digit year",
     });

@@ -17,23 +17,8 @@ import {
 } from "@chakra-ui/react";
 import { useEffect, useMemo, useState } from "react";
 
-const MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-
 type Statistics = {
-  year: number;
+  year: number | null;
   summary: {
     completedGames: number;
     totalEstimatedHours: number;
@@ -52,6 +37,15 @@ type Statistics = {
   }[];
   monthlyDropped: { month: number; name: string; count: number }[];
   completionTimeline: {
+    date: string;
+    igdbId: number | null;
+    title: string;
+    store: string | null;
+    estimatedHours: number | null;
+    priority: string;
+    status: "COMPLETED" | "DROPPED";
+  }[];
+  annualTimeline: {
     date: string;
     igdbId: number | null;
     title: string;
@@ -107,7 +101,7 @@ function StatCard({
 }
 
 export default function StatisticsPage() {
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [year, setYear] = useState<number | null>(new Date().getFullYear());
   const [stats, setStats] = useState<Statistics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -121,7 +115,9 @@ export default function StatisticsPage() {
     setLoading(true);
     setError(null);
 
-    const params = new URLSearchParams({ year: String(year) });
+    const params = new URLSearchParams({
+      year: year === null ? "all" : String(year),
+    });
 
     apiGet<Statistics>(`/stats?${params.toString()}`)
       .then((data) => {
@@ -150,9 +146,9 @@ export default function StatisticsPage() {
     () =>
       stats?.completionTimeline.filter(
         (game) =>
+          matchesLibraryFilter(game, selectedLibraryFilter) &&
           (selectedMonth === null ||
-            new Date(game.date).getUTCMonth() === selectedMonth) &&
-          matchesLibraryFilter(game, selectedLibraryFilter),
+            new Date(game.date).getUTCMonth() === selectedMonth),
       ) ?? [],
     [selectedLibraryFilter, selectedMonth, stats],
   );
@@ -217,8 +213,38 @@ export default function StatisticsPage() {
     }));
   }, [periodGames]);
 
-  const monthlyByStore = useMemo(() => {
-    const months = Array.from({ length: 12 }, () => ({
+  const annualSummary = useMemo(() => {
+    const years = new Map<
+      number,
+      { year: number; completedGames: number; droppedGames: number }
+    >();
+
+    for (const game of stats?.annualTimeline ?? []) {
+      if (!matchesLibraryFilter(game, selectedLibraryFilter)) continue;
+      if (
+        selectedStore !== null &&
+        (game.store?.trim() || "No store") !== selectedStore
+      ) {
+        continue;
+      }
+
+      const gameYear = new Date(game.date).getUTCFullYear();
+      const totals = years.get(gameYear) ?? {
+        year: gameYear,
+        completedGames: 0,
+        droppedGames: 0,
+      };
+      if (game.status === "COMPLETED") totals.completedGames += 1;
+      if (game.status === "DROPPED") totals.droppedGames += 1;
+      years.set(gameYear, totals);
+    }
+
+    return [...years.values()].sort((a, b) => a.year - b.year);
+  }, [selectedLibraryFilter, selectedStore, stats]);
+
+  const monthlySummary = useMemo(() => {
+    const months = Array.from({ length: 12 }, (_, index) => ({
+      name: stats?.monthlyCompleted[index]?.name ?? String(index + 1),
       completedGames: 0,
       droppedGames: 0,
     }));
@@ -241,18 +267,29 @@ export default function StatisticsPage() {
   }, [selectedLibraryFilter, selectedStore, stats]);
 
   const periodLabel =
-    selectedMonth === null
-      ? String(year)
-      : `${stats?.monthlyCompleted[selectedMonth]?.name ?? MONTHS[selectedMonth]} ${year}`;
+    year === null
+      ? "all time"
+      : selectedMonth === null
+        ? String(year)
+        : `${stats?.monthlyCompleted[selectedMonth]?.name ?? selectedMonth + 1} ${year}`;
 
-  const maxMonthlyCount = useMemo(
-    () => Math.max(...monthlyByStore.map((month) => month.completedGames), 1),
-    [monthlyByStore],
+  const maxAnnualCount = useMemo(
+    () =>
+      Math.max(
+        ...annualSummary.map((item) => item.completedGames + item.droppedGames),
+        1,
+      ),
+    [annualSummary],
   );
 
-  const maxDroppedCount = useMemo(
-    () => Math.max(...monthlyByStore.map((month) => month.droppedGames), 1),
-    [monthlyByStore],
+  const maxMonthlyCompleted = useMemo(
+    () => Math.max(...monthlySummary.map((month) => month.completedGames), 1),
+    [monthlySummary],
+  );
+
+  const maxMonthlyDropped = useMemo(
+    () => Math.max(...monthlySummary.map((month) => month.droppedGames), 1),
+    [monthlySummary],
   );
 
   return (
@@ -290,21 +327,40 @@ export default function StatisticsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setYear((value) => value - 1)}
+              disabled={year === null}
+              onClick={() => {
+                setSelectedMonth(null);
+                setYear((value) => (value ?? new Date().getFullYear()) - 1);
+              }}
               aria-label="Previous year"
             >
               ←
             </Button>
             <Text fontWeight="bold" minW="14" textAlign="center">
-              {year}
+              {year ?? "All years"}
             </Text>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setYear((value) => value + 1)}
+              disabled={year === null}
+              onClick={() => {
+                setSelectedMonth(null);
+                setYear((value) => (value ?? new Date().getFullYear()) + 1);
+              }}
               aria-label="Next year"
             >
               →
+            </Button>
+            <Button
+              variant={year === null ? "solid" : "outline"}
+              size="sm"
+              onClick={() => {
+                setSelectedMonth(null);
+                setYear(null);
+              }}
+              aria-pressed={year === null}
+            >
+              All years
             </Button>
             <Button
               variant="ghost"
@@ -368,11 +424,17 @@ export default function StatisticsPage() {
               <Box p={4} borderWidth="1px" borderRadius="lg">
                 <Flex justify="space-between" align="center" mb={5}>
                   <Box>
-                    <Heading size="sm">Completion rhythm</Heading>
+                    <Heading size="sm">
+                      {year === null ? "Games by year" : "Completion rhythm"}
+                    </Heading>
                     <Text fontSize="sm" opacity={0.65}>
-                      {selectedStore
-                        ? `${selectedStore} games closed month by month`
-                        : "Games closed month by month"}
+                      {year === null
+                        ? selectedStore
+                          ? `${selectedStore} games completed or dropped by year`
+                          : "Games completed or dropped by year"
+                        : selectedStore
+                          ? `${selectedStore} games closed month by month`
+                          : "Games closed month by month"}
                     </Text>
                   </Box>
                   <Badge variant="outline">
@@ -391,74 +453,135 @@ export default function StatisticsPage() {
                     <Text>Dropped</Text>
                   </HStack>
                 </HStack>
-                <Flex h="190px" align="end" gap={{ base: 1, md: 3 }}>
-                  {stats.monthlyCompleted.map((month, index) => {
-                    const monthStats = monthlyByStore[index];
-                    const height = `${Math.max((monthStats.completedGames / maxMonthlyCount) * 100, monthStats.completedGames ? 8 : 2)}%`;
-                    return (
+                {year === null ? (
+                  <Flex
+                    h="210px"
+                    align="end"
+                    gap={{ base: 2, md: 4 }}
+                    overflowX="auto"
+                  >
+                    {annualSummary.map((yearStats) => (
                       <Stack
-                        key={month.month}
-                        gap={2}
+                        key={yearStats.year}
+                        gap={1}
                         align="center"
-                        flex={1}
+                        flex="0 0 52px"
                         h="full"
                         justify="end"
                         cursor="pointer"
                         role="button"
                         tabIndex={0}
-                        aria-label={`Show games from ${month.name}`}
+                        aria-label={`${yearStats.year}: ${yearStats.completedGames} completed, ${yearStats.droppedGames} dropped`}
+                        onClick={() => {
+                          setSelectedMonth(null);
+                          setYear(yearStats.year);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            setSelectedMonth(null);
+                            setYear(yearStats.year);
+                          }
+                        }}
+                      >
+                        <Text fontSize="xs">
+                          {yearStats.completedGames}/{yearStats.droppedGames}
+                        </Text>
+                        <Flex align="end" justify="center" gap={1} h="140px">
+                          <Box
+                            w="16px"
+                            h={`${Math.max((yearStats.completedGames / maxAnnualCount) * 100, yearStats.completedGames ? 5 : 2)}%`}
+                            minH="3px"
+                            borderRadius="sm"
+                            bg="teal.300"
+                            title={`${yearStats.year}: ${yearStats.completedGames} completed`}
+                          />
+                          <Box
+                            w="16px"
+                            h={`${Math.max((yearStats.droppedGames / maxAnnualCount) * 100, yearStats.droppedGames ? 5 : 2)}%`}
+                            minH="3px"
+                            borderRadius="sm"
+                            bg="red.300"
+                            title={`${yearStats.year}: ${yearStats.droppedGames} dropped`}
+                          />
+                        </Flex>
+                        <Text fontSize="xs" opacity={0.7}>
+                          {yearStats.year}
+                        </Text>
+                      </Stack>
+                    ))}
+                    {annualSummary.length === 0 && (
+                      <Text opacity={0.65}>
+                        No closed games with a completion date.
+                      </Text>
+                    )}
+                  </Flex>
+                ) : (
+                  <Flex
+                    h="210px"
+                    align="end"
+                    gap={{ base: 2, md: 4 }}
+                    overflowX="auto"
+                  >
+                    {monthlySummary.map((monthStats, index) => (
+                      <Stack
+                        key={index}
+                        gap={1}
+                        align="center"
+                        flex="0 0 48px"
+                        h="full"
+                        justify="end"
+                        cursor="pointer"
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`${monthStats.name}: ${monthStats.completedGames} completed, ${monthStats.droppedGames} dropped`}
                         aria-pressed={selectedMonth === index}
                         onClick={() =>
-                          setSelectedMonth((value) =>
-                            value === index ? null : index,
+                          setSelectedMonth((current) =>
+                            current === index ? null : index,
                           )
                         }
                         onKeyDown={(event) => {
                           if (event.key === "Enter" || event.key === " ") {
                             event.preventDefault();
-                            setSelectedMonth((value) =>
-                              value === index ? null : index,
+                            setSelectedMonth((current) =>
+                              current === index ? null : index,
                             );
                           }
                         }}
                       >
-                        <Text
-                          fontSize="xs"
-                          opacity={monthStats.completedGames ? 1 : 0.45}
-                        >
-                          {monthStats.completedGames}
+                        <Text fontSize="xs">
+                          {monthStats.completedGames}/{monthStats.droppedGames}
                         </Text>
-                        <Box
-                          w="full"
-                          maxW="34px"
-                          h={height}
-                          minH="3px"
-                          borderRadius="sm"
-                          bg={
-                            selectedMonth === index
-                              ? "orange.300"
-                              : monthStats.completedGames
-                                ? "teal.300"
-                                : "whiteAlpha.300"
-                          }
-                          title={`${month.name}: ${monthStats.completedGames} completed`}
-                        />
-                        <Box
-                          w="full"
-                          maxW="34px"
-                          h={`${Math.max((monthStats.droppedGames / maxDroppedCount) * 100, monthStats.droppedGames ? 8 : 2)}%`}
-                          minH="3px"
-                          borderRadius="sm"
-                          bg="red.300"
-                          title={`${month.name}: ${monthStats.droppedGames} dropped`}
-                        />
-                        <Text fontSize="xs" opacity={0.65}>
-                          {MONTHS[index]}
+                        <Flex align="end" justify="center" gap={1} h="140px">
+                          <Box
+                            w="16px"
+                            h={`${Math.max((monthStats.completedGames / maxMonthlyCompleted) * 100, monthStats.completedGames ? 5 : 2)}%`}
+                            minH="3px"
+                            borderRadius="sm"
+                            bg={
+                              selectedMonth === index
+                                ? "orange.300"
+                                : "teal.300"
+                            }
+                            title={`${monthStats.name}: ${monthStats.completedGames} completed`}
+                          />
+                          <Box
+                            w="16px"
+                            h={`${Math.max((monthStats.droppedGames / maxMonthlyDropped) * 100, monthStats.droppedGames ? 5 : 2)}%`}
+                            minH="3px"
+                            borderRadius="sm"
+                            bg="red.300"
+                            title={`${monthStats.name}: ${monthStats.droppedGames} dropped`}
+                          />
+                        </Flex>
+                        <Text fontSize="xs" opacity={0.7}>
+                          {monthStats.name.slice(0, 3)}
                         </Text>
                       </Stack>
-                    );
-                  })}
-                </Flex>
+                    ))}
+                  </Flex>
+                )}
               </Box>
 
               <Box p={4} borderWidth="1px" borderRadius="lg">
@@ -557,7 +680,7 @@ export default function StatisticsPage() {
                       variant="ghost"
                       onClick={() => setSelectedMonth(null)}
                     >
-                      Show all
+                      Show full year
                     </Button>
                   )}
                 </Flex>
@@ -573,34 +696,49 @@ export default function StatisticsPage() {
                         borderColor="whiteAlpha.200"
                       >
                         <Box minW={0}>
-                          <Text fontWeight="medium" truncate>
-                            {game.title}
-                          </Text>
+                          <Flex align="center" gap={2} minW={0}>
+                            <Box
+                              as="span"
+                              role="img"
+                              aria-label={
+                                game.status === "DROPPED"
+                                  ? "Dropped"
+                                  : "Completed"
+                              }
+                              w="8px"
+                              h="8px"
+                              flexShrink={0}
+                              borderRadius="full"
+                              bg={
+                                game.status === "DROPPED"
+                                  ? "red.300"
+                                  : "green.300"
+                              }
+                            />
+                            <Text fontWeight="medium" truncate>
+                              {game.title}
+                            </Text>
+                            {game.priority === "FAVORITE" && (
+                              <Text
+                                as="span"
+                                role="img"
+                                aria-label="Favorite"
+                                color="orange.300"
+                                fontSize="sm"
+                                flexShrink={0}
+                              >
+                                ★
+                              </Text>
+                            )}
+                          </Flex>
                           <Text fontSize="xs" opacity={0.6}>
                             {game.store || "No store"}
                           </Text>
                         </Box>
                         <Box textAlign="right" flexShrink={0}>
-                          <Flex align="center" justify="end" gap={2}>
-                            {game.priority === "FAVORITE" && (
-                              <Badge variant="subtle" colorPalette="orange">
-                                Favorite
-                              </Badge>
-                            )}
-                            <Badge
-                              variant="subtle"
-                              colorPalette={
-                                game.status === "DROPPED" ? "red" : "green"
-                              }
-                            >
-                              {game.status === "DROPPED"
-                                ? "Dropped"
-                                : "Completed"}
-                            </Badge>
-                            <Text fontSize="sm">
-                              {new Date(game.date).toLocaleDateString()}
-                            </Text>
-                          </Flex>
+                          <Text fontSize="sm">
+                            {new Date(game.date).toLocaleDateString()}
+                          </Text>
                           <Text fontSize="xs" opacity={0.6}>
                             {game.estimatedHours ?? 0}h
                           </Text>
@@ -609,9 +747,7 @@ export default function StatisticsPage() {
                     ))
                   ) : (
                     <Text opacity={0.65}>
-                      {selectedMonth === null
-                        ? `No closed games in ${year}.`
-                        : "No closed games in this month."}
+                      {`No closed games in ${periodLabel}.`}
                     </Text>
                   )}
                 </Stack>
