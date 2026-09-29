@@ -41,6 +41,7 @@ type Statistics = {
     backlogGames: number;
     playingGames: number;
     droppedGames: number;
+    favoriteGames: number;
     droppedThisYear: number;
   };
   monthlyCompleted: {
@@ -56,6 +57,7 @@ type Statistics = {
     title: string;
     store: string | null;
     estimatedHours: number | null;
+    priority: string;
     status: "COMPLETED" | "DROPPED";
   }[];
   byStore: { store: string; count: number }[];
@@ -63,6 +65,22 @@ type Statistics = {
   hours: { completedEstimated: number; droppedExcluded: boolean };
   filters: { store?: string };
 };
+
+type LibraryFilter = "COMPLETED" | "DROPPED" | "FAVORITES";
+type TimelineGame = Statistics["completionTimeline"][number];
+
+function matchesLibraryFilter(
+  game: TimelineGame,
+  filter: LibraryFilter | null,
+) {
+  if (filter === "FAVORITES") {
+    return game.status === "COMPLETED" && game.priority === "FAVORITE";
+  }
+  if (filter === "COMPLETED" || filter === "DROPPED") {
+    return game.status === filter;
+  }
+  return true;
+}
 
 function StatCard({
   label,
@@ -95,6 +113,8 @@ export default function StatisticsPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const [selectedStore, setSelectedStore] = useState<string | null>(null);
+  const [selectedLibraryFilter, setSelectedLibraryFilter] =
+    useState<LibraryFilter | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -130,10 +150,11 @@ export default function StatisticsPage() {
     () =>
       stats?.completionTimeline.filter(
         (game) =>
-          selectedMonth === null ||
-          new Date(game.date).getUTCMonth() === selectedMonth,
+          (selectedMonth === null ||
+            new Date(game.date).getUTCMonth() === selectedMonth) &&
+          matchesLibraryFilter(game, selectedLibraryFilter),
       ) ?? [],
-    [selectedMonth, stats],
+    [selectedLibraryFilter, selectedMonth, stats],
   );
 
   const selectedTimeline = useMemo(
@@ -203,6 +224,7 @@ export default function StatisticsPage() {
     }));
 
     for (const game of stats?.completionTimeline ?? []) {
+      if (!matchesLibraryFilter(game, selectedLibraryFilter)) continue;
       if (
         selectedStore !== null &&
         (game.store?.trim() || "No store") !== selectedStore
@@ -216,7 +238,7 @@ export default function StatisticsPage() {
     }
 
     return months;
-  }, [selectedStore, stats]);
+  }, [selectedLibraryFilter, selectedStore, stats]);
 
   const periodLabel =
     selectedMonth === null
@@ -560,6 +582,11 @@ export default function StatisticsPage() {
                         </Box>
                         <Box textAlign="right" flexShrink={0}>
                           <Flex align="center" justify="end" gap={2}>
+                            {game.priority === "FAVORITE" && (
+                              <Badge variant="subtle" colorPalette="orange">
+                                Favorite
+                              </Badge>
+                            )}
                             <Badge
                               variant="subtle"
                               colorPalette={
@@ -596,19 +623,71 @@ export default function StatisticsPage() {
                   Current state of your backlog
                 </Text>
                 <Stack gap={3}>
-                  {stats.byStatus.map((status) => (
-                    <Flex
-                      key={status.status}
-                      justify="space-between"
-                      align="center"
-                      p={3}
-                      borderWidth="1px"
-                      borderRadius="md"
-                    >
-                      <Text>{status.status.replaceAll("_", " ")}</Text>
-                      <Badge>{status.count}</Badge>
-                    </Flex>
-                  ))}
+                  {stats.byStatus
+                    .filter((status) => status.status !== "PLAYING")
+                    .map((status) => {
+                      const filter: LibraryFilter | null =
+                        status.status === "COMPLETED" ||
+                        status.status === "DROPPED"
+                          ? status.status
+                          : null;
+
+                      if (filter) {
+                        return (
+                          <Button
+                            key={status.status}
+                            variant={
+                              selectedLibraryFilter === filter
+                                ? "solid"
+                                : "outline"
+                            }
+                            w="full"
+                            justifyContent="space-between"
+                            aria-pressed={selectedLibraryFilter === filter}
+                            onClick={() =>
+                              setSelectedLibraryFilter((current) =>
+                                current === filter ? null : filter,
+                              )
+                            }
+                          >
+                            <Text>{status.status.replaceAll("_", " ")}</Text>
+                            <Badge>{status.count}</Badge>
+                          </Button>
+                        );
+                      }
+
+                      return (
+                        <Flex
+                          key={status.status}
+                          justify="space-between"
+                          align="center"
+                          p={3}
+                          borderWidth="1px"
+                          borderRadius="md"
+                        >
+                          <Text>{status.status.replaceAll("_", " ")}</Text>
+                          <Badge>{status.count}</Badge>
+                        </Flex>
+                      );
+                    })}
+                  <Button
+                    variant={
+                      selectedLibraryFilter === "FAVORITES"
+                        ? "solid"
+                        : "outline"
+                    }
+                    w="full"
+                    justifyContent="space-between"
+                    aria-pressed={selectedLibraryFilter === "FAVORITES"}
+                    onClick={() =>
+                      setSelectedLibraryFilter((current) =>
+                        current === "FAVORITES" ? null : "FAVORITES",
+                      )
+                    }
+                  >
+                    <Text>FAVORITES</Text>
+                    <Badge>{stats.summary.favoriteGames}</Badge>
+                  </Button>
                   <Text fontSize="xs" opacity={0.6} mt={2}>
                     Currently dropped games: {stats.summary.droppedGames}. Their
                     estimated hours are excluded from the completed total.

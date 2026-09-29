@@ -32,7 +32,9 @@ export async function getStatistics(
   const completedThisYear = filteredGames.filter(
     (game) =>
       game.status !== "DROPPED" &&
-      (game.status === "COMPLETED" || game.priority === "DONE") &&
+      (game.status === "COMPLETED" ||
+        game.priority === "DONE" ||
+        game.priority === "FAVORITE") &&
       game.completedAt !== null &&
       game.completedAt.getUTCFullYear() === year,
   );
@@ -41,7 +43,8 @@ export async function getStatistics(
     (game) =>
       (game.status === "DROPPED" ||
         game.status === "COMPLETED" ||
-        game.priority === "DONE") &&
+        game.priority === "DONE" ||
+        game.priority === "FAVORITE") &&
       game.completedAt !== null &&
       game.completedAt.getUTCFullYear() === year,
   );
@@ -83,7 +86,15 @@ export async function getStatistics(
 
   const byStatus = Object.entries(
     filteredGames.reduce<Record<string, number>>((counts, game) => {
-      counts[game.status] = (counts[game.status] ?? 0) + 1;
+      const status =
+        game.status === "DROPPED"
+          ? "DROPPED"
+          : game.status === "COMPLETED" ||
+              game.priority === "DONE" ||
+              game.priority === "FAVORITE"
+            ? "COMPLETED"
+            : game.status;
+      counts[status] = (counts[status] ?? 0) + 1;
       return counts;
     }, {}),
   )
@@ -107,6 +118,9 @@ export async function getStatistics(
       backlogGames: filteredGames.filter((game) => game.status === "BACKLOG").length,
       playingGames: filteredGames.filter((game) => game.status === "PLAYING").length,
       droppedGames: filteredGames.filter((game) => game.status === "DROPPED").length,
+      favoriteGames: filteredGames.filter(
+        (game) => game.priority === "FAVORITE",
+      ).length,
       droppedThisYear: closedThisYear.filter(
         (game) => game.status === "DROPPED",
       ).length,
@@ -119,6 +133,7 @@ export async function getStatistics(
       title: game.title,
       store: game.store,
       estimatedHours: game.estimatedHours,
+      priority: game.priority,
       status: game.status === "DROPPED" ? "DROPPED" : "COMPLETED",
     })),
     byStore,
